@@ -1,0 +1,13 @@
+# Bakim raporlari ve loglar (kisisel veri icerdigindan repoya dahil edilmez)
+BakimRaporlari/
+*.log
+*.html
+skor_gecmis.json
+
+# Gecici dosyalar
+*.tmp
+Thumbs.db
+.DS_Store
+
+# Windows
+desktop.ini

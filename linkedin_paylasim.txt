@@ -1,0 +1,35 @@
+---  LinkedIn Paylaşım Metni  ---
+
+🛡️ Kendi Windows bakım aracımı geliştirdim — açık kaynak olarak yayınlıyorum.
+
+Bilgisayarım yavaşladığında veya disk dolduğunda hep aynı soruları soruyordum:
+"Neyi silebilirim? Bozuk bir şey var mı? Performansı nasıl artırabilirim?"
+
+Bunları araştırmak yerine bir kez yazıp her zaman kullanmak istedim.
+
+Sonuç: SistemBakim v5.0 — tek bir PowerShell scripti, 25 modül.
+
+✅ Ne yapıyor?
+• 19 farklı konumdan geçici dosya temizliği (Chrome, Discord, Spotify, Steam dahil)
+• Yinelenen dosyaları MD5 hash ile tespit eder
+• S.M.A.R.T. disk sağlık analizi (sıcaklık, aşınma, hata sayısı)
+• SFC / DISM / ChkDsk sistem onarımı
+• Güvenlik duvarı, Defender, açık port ve hosts dosyası taraması
+• Geliştirici araç temizliği: node_modules, bin/obj, NuGet, pip, Docker, WSL2
+• 100 puanlık sistem sağlık skoru ve HTML dashboard
+• Haftalık otomatik bakım zamanlayıcısı
+
+🔒 KVKK uyumlu:
+Tamamen yerel çalışır. İnternete hiçbir veri gönderilmez. Log dosyaları sadece kendi masaüstünüzde saklanır.
+
+⚠️ Güvenli:
+Her silme işlemi öncesinde onay ister. Hiçbir şeyi gizlice yapmaz.
+
+👇 GitHub'da açık kaynak:
+github.com/[KULLANICI_ADIN]/SistemBakim
+
+Yazılımcı arkadaşlara özellikle tavsiye ederim — node_modules ve bin/obj modülleri tek başına birkaç GB kurtarabiliyor.
+
+#PowerShell #Windows #OpenSource #DevTools #Performans #Siber Güvenlik
+
+---
