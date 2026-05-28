@@ -21,7 +21,7 @@ if (-not $_yon.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 
 # == UTF-8 ENCODING ZORLAMA ========================================
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $global:KLASOR  = Split-Path $MyInvocation.MyCommand.Path

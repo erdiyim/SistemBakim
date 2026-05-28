@@ -47,8 +47,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 ; Modern sihirbaz gorunumu
 WizardStyle=modern
 WizardSizePercent=110,110
-WizardImageFile=compiler:WizModernImage-IS.bmp
-WizardSmallImageFile=compiler:WizModernSmallImage-IS.bmp
+; WizardImageFile ve SmallImageFile: varsayilan kullaniliyor
 
 ; LZMA2 ultra sikistirma — minimum cikti boyutu
 Compression=lzma2/ultra64
@@ -98,7 +97,7 @@ english.DeleteUserData=Also delete user data (settings, logs, backups)
 ;  [Tasks] — Kullanici secenekleri
 ; ============================================================
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "addtopath";   Description: "{cm:AddToPath}"; Flags: unchecked
 
 ; ============================================================
