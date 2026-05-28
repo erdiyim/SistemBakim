@@ -13,7 +13,7 @@
 #   Yazar   : Erdi (araç fikri) + Claude / Anthropic (kod)
 #   Surum   : 5.0  —  "Devrim Sürümü"
 #   Lisans  : Kisisel ve ticari olmayan kullanim serbesttir.
-#   GitHub  : github.com/[kullanicin]
+#   GitHub  : github.com/erdiyim/SistemBakim
 #
 #   Gereksinim : PowerShell 5.1+  |  Yönetici yetkisi önerilir
 #   Test       : Windows 10 / 11
@@ -87,8 +87,12 @@ if (-not $_yonetici.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "SilentlyContinue"
 
+# UTF-8 Encoding zorlama (Türkçe karakter desteği)
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 $SURUM        = "5.0"
-$GITHUB_REPO  = "erdi/SistemBakim"   # GitHub kullanici/repo — yayinda guncelle
+$GITHUB_REPO  = "erdiyim/SistemBakim"
 $LOG_KLASOR   = "$env:USERPROFILE\Desktop\BakimRaporlari"
 $LOG_DOSYA    = Join-Path $LOG_KLASOR ("Bakim_{0}.log" -f (Get-Date -Format "yyyyMMdd_HHmm"))
 $HTML_RAPOR   = Join-Path $LOG_KLASOR ("Rapor_{0}.html" -f (Get-Date -Format "yyyyMMdd_HHmm"))
@@ -132,11 +136,15 @@ $global:UpdateJob = Start-Job -ScriptBlock {
 # Bu wrapper menu secimlerinde '1' (varsayilan eylem) dondurur.
 # '1' degerı E/H kontrollerinde [Ee] ile eslesmedigi icin tehlikeli islemler GUVENLE atlanir.
 if ($env:SISTEMBAK_GUI -eq '1') {
+    # GUI modunda Read-Host sessiz bypass — '1' dondurur (varsayilan eylem).
+    # '1' E/H kontrollerinde eslesmez → tehlikeli islemler guvenle atlanir.
+    # Write-Host YAPMA — transcript'e yazilir ve GUI log'unu kirletir.
     function Read-Host {
         param([Parameter(Position=0)][string]$Prompt)
-        Write-Host "[GUI Otomatik]" -ForegroundColor DarkGray
         return '1'
     }
+    # GUI modunda menu gosterme fonksiyonunu sustur
+    function MenuGosterSustur { }
 }
 
 function Yaz {

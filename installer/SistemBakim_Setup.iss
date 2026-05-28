@@ -83,9 +83,9 @@ Source: "..\bin\SistemBakim.exe";     DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\SistemBakim_CLI.exe";  DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\sistem.ico";           DestDir: "{app}"; Flags: ignoreversion
 
-; Lisans ve bilgi dosyalari (varsa)
-; Source: "..\LICENSE";                DestDir: "{app}"; Flags: ignoreversion; DestName: "LICENSE.txt"
-; Source: "..\README.md";              DestDir: "{app}"; Flags: ignoreversion isreadme
+; Lisans ve bilgi dosyalari
+Source: "..\LICENSE";                DestDir: "{app}"; Flags: ignoreversion; DestName: "LICENSE.txt"
+Source: "..\README.md";              DestDir: "{app}"; Flags: ignoreversion isreadme
 
 [Icons]
 ; Baslat Menusu
@@ -97,9 +97,11 @@ Name: "{group}\{#MyAppName} Kaldir";                Filename: "{uninstallexe}"; 
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\sistem.ico"; Tasks: desktopicon; Comment: "Sistem bakim ve optimizasyon araci"
 
 [Registry]
-; Uygulama kayit bilgileri (Program Ekle/Kaldir entegrasyonu otomatik, burasi ek metadata)
+; Uygulama kayit bilgileri
 Root: HKLM; Subkey: "SOFTWARE\{#MyAppName}"; ValueType: string; ValueName: "InstallDir";  ValueData: "{app}";              Flags: uninsdeletekey
 Root: HKLM; Subkey: "SOFTWARE\{#MyAppName}"; ValueType: string; ValueName: "Version";     ValueData: "{#MyAppVersion}";    Flags: uninsdeletekey
+; PATH'e ekle (CLI icin)
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Check: NeedsAddPath('{app}'); Flags: uninsdeletekeyifempty
 
 [Run]
 ; Kurulum sonrasi "Uygulamayi Calistir" secenegi
@@ -183,4 +185,17 @@ begin
     MsgBox('SistemBakim sadece 64-bit Windows 10/11 uzerinde calisir.', mbCriticalError, MB_OK);
     Result := False;
   end;
+end;
+
+// PATH'e ekleme gerekli mi kontrol et (tekrar eklemeyi onle)
+function NeedsAddPath(Param: string): Boolean;
+var
+  OrigPath: string;
+begin
+  if not RegQueryStringValue(HKLM, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', OrigPath)
+  then begin
+    Result := True;
+    exit;
+  end;
+  Result := Pos(';' + UpperCase(Param) + ';', ';' + UpperCase(OrigPath) + ';') = 0;
 end;

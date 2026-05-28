@@ -154,7 +154,7 @@ for ($i = 0; $i -lt $guiLines.Count; $i++) {
 
     # ── Modul sayisi duzelt ──
     if ($line -match '40 modul') {
-        $line = $line -replace '40 modul', '53 modul'
+        $line = $line -replace '40 modul', '69 modul'
     }
 
     $processed.Add($line)
@@ -260,7 +260,7 @@ try {
         STA          = $true
         requireAdmin = $true
         title        = "Sistem Bakim Araci"
-        description  = "Windows Performans, Temizlik ve Oyun Optimizasyon Araci - 53 Modul"
+        description  = "Windows Performans, Temizlik ve Oyun Optimizasyon Araci - 69 Modul"
         company      = "Erdi"
         product      = "SistemBakim"
         version      = $versiyon
@@ -292,7 +292,7 @@ try {
         outputFile   = $outCLI
         requireAdmin = $true
         title        = "Sistem Bakim Araci - CLI"
-        description  = "Windows Performans, Temizlik ve Oyun Optimizasyon Araci - 53 Modul - Konsol"
+        description  = "Windows Performans, Temizlik ve Oyun Optimizasyon Araci - 69 Modul - Konsol"
         company      = "Erdi"
         product      = "SistemBakim CLI"
         version      = $versiyon
@@ -333,7 +333,7 @@ if (Test-Path $outGUI) {
     Write-Host ("    Versiyon : " + $versiyon) -ForegroundColor White
     Write-Host "    Tip      : Windows pencere uygulamasi" -ForegroundColor Gray
     Write-Host "    Konsol   : YOK (siyah pencere gormezsiniz)" -ForegroundColor Gray
-    Write-Host "    Modul    : 53 modul, 68 fonksiyon GOMULU" -ForegroundColor Gray
+    Write-Host "    Modul    : 69 modul GOMULU" -ForegroundColor Gray
     Write-Host "    Kullanim : Cift tikla > UAC onayla > GUI acilir" -ForegroundColor Gray
     Write-Host "    Bagimlilik: YOK — tek EXE dosyasi yeterli" -ForegroundColor Gray
     Write-Host ""

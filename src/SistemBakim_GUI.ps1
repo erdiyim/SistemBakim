@@ -20,6 +20,10 @@ if (-not $_yon.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 
+# == UTF-8 ENCODING ZORLAMA ========================================
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 $global:KLASOR  = Split-Path $MyInvocation.MyCommand.Path
 $global:BACKEND = Join-Path $global:KLASOR "SistemBakim_v5.ps1"
 
@@ -520,8 +524,17 @@ $global:APP_ICON_BMP = IkonBitmapOlustur
             </Border>
 
             <!-- SAGLIK + METRIKLER -->
-            <Border Background="#111520" CornerRadius="20" Margin="0,24,0,0"
+            <Border CornerRadius="20" Margin="0,24,0,0"
                     Padding="40,32" BorderBrush="#1A1F2E" BorderThickness="1">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                  <GradientStop Color="#111520" Offset="0"/>
+                  <GradientStop Color="#0F1A28" Offset="1"/>
+                </LinearGradientBrush>
+              </Border.Background>
+              <Border.Effect>
+                <DropShadowEffect BlurRadius="35" ShadowDepth="0" Color="#7C5CFC" Opacity="0.10"/>
+              </Border.Effect>
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="200"/>
@@ -542,6 +555,9 @@ $global:APP_ICON_BMP = IkonBitmapOlustur
                 <UniformGrid Grid.Column="1" Columns="3" Margin="28,0,0,0">
                   <Border Background="#0D1016" CornerRadius="16" Margin="6" Padding="20,18"
                           BorderBrush="#151A26" BorderThickness="1">
+                    <Border.Effect>
+                      <DropShadowEffect BlurRadius="16" ShadowDepth="2" Color="#000000" Opacity="0.18" Direction="270"/>
+                    </Border.Effect>
                     <StackPanel>
                       <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Border Width="8" Height="8" CornerRadius="4" Background="#34D399" Margin="0,0,8,0" VerticalAlignment="Center"/>
@@ -553,6 +569,9 @@ $global:APP_ICON_BMP = IkonBitmapOlustur
                   </Border>
                   <Border Background="#0D1016" CornerRadius="16" Margin="6" Padding="20,18"
                           BorderBrush="#151A26" BorderThickness="1">
+                    <Border.Effect>
+                      <DropShadowEffect BlurRadius="16" ShadowDepth="2" Color="#000000" Opacity="0.18" Direction="270"/>
+                    </Border.Effect>
                     <StackPanel>
                       <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Border Width="8" Height="8" CornerRadius="4" Background="#60A5FA" Margin="0,0,8,0" VerticalAlignment="Center"/>
@@ -564,6 +583,9 @@ $global:APP_ICON_BMP = IkonBitmapOlustur
                   </Border>
                   <Border Background="#0D1016" CornerRadius="16" Margin="6" Padding="20,18"
                           BorderBrush="#151A26" BorderThickness="1">
+                    <Border.Effect>
+                      <DropShadowEffect BlurRadius="16" ShadowDepth="2" Color="#000000" Opacity="0.18" Direction="270"/>
+                    </Border.Effect>
                     <StackPanel>
                       <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Border Width="8" Height="8" CornerRadius="4" Background="#FB923C" Margin="0,0,8,0" VerticalAlignment="Center"/>
@@ -1044,9 +1066,23 @@ try {
 }
 
 # == UYGULAMA IKONU AYARLA ======================================
-$window.Icon = $global:APP_ICON_BMP
-$BrandIcon = $window.FindName("BrandIcon")
-if ($BrandIcon) { $BrandIcon.Source = $global:APP_ICON_BMP }
+try {
+    if ($global:APP_ICON_BMP) {
+        $window.Icon = $global:APP_ICON_BMP
+        $BrandIcon = $window.FindName("BrandIcon")
+        if ($BrandIcon) { $BrandIcon.Source = $global:APP_ICON_BMP }
+    } else {
+        # Fallback: sistem.ico dosyasindan yukle
+        $icoYol = Join-Path $global:KLASOR "sistem.ico"
+        if (Test-Path $icoYol) {
+            $icoUri = New-Object System.Uri($icoYol)
+            $icoBmp = New-Object System.Windows.Media.Imaging.BitmapImage($icoUri)
+            $window.Icon = $icoBmp
+        }
+    }
+} catch {
+    # Icon yuklenemezse sessizce devam et — uygulama kullanilabilir olmali
+}
 
 # == KONTROL REFERANSLARI =======================================
 $DashboardView   = $window.FindName("DashboardView")
@@ -1324,7 +1360,7 @@ function BaslatGomulu($funcName, $modAdi) {
 
     $logDosya   = $global:LOG_DOSYA
     $backendYol = $global:BACKEND
-    $scriptContent = "`$env:SISTEMBAK_GUI = '1'; Start-Transcript -Path '" + $logDosya + "' -Force; . '" + $backendYol + "'; " + $funcName + "; Stop-Transcript; '__BITTI__' | Add-Content '" + $logDosya + "'"
+    $scriptContent = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; `$OutputEncoding = [System.Text.Encoding]::UTF8; `$env:SISTEMBAK_GUI = '1'; Start-Transcript -Path '" + $logDosya + "' -Force; . '" + $backendYol + "'; " + $funcName + "; Stop-Transcript; '__BITTI__' | Add-Content '" + $logDosya + "'"
     $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($scriptContent))
 
     try {
@@ -1361,6 +1397,9 @@ function BaslatGomulu($funcName, $modAdi) {
                     $yeniSatirlar = $icerik[$global:SON_OKUNAN..($icerik.Count - 1)]
                     foreach ($satir in $yeniSatirlar) {
                         if ($satir -ne "__BITTI__" -and $satir.Trim() -ne "") {
+                            # CLI menu/prompt satirlarini filtrele — GUI log'unu temiz tut
+                            if ($satir -match '^\s*(Secim\s*:|Seçim\s*:|Ana Men[uü]|Devam etmek icin|0\.\s*(Geri|Cik|Ana)|Read-Host|\[GUI Otomatik\]|Secim yapin|Seçim yapın|\>\s*$)') { continue }
+                            if ($satir -match '^\s*\d+\.\s+\w+.*\d+\.\s+\w+' -and $satir -match '(Geri|Cik)') { continue }
                             $TxtCikti.AppendText($satir + "`n")
                             # Gercek zamanli durum: log satirlarindan ilerleme bilgisi cikar
                             if ($satir -match '^\s*\[(\d+)/(\d+)\]') {
@@ -1454,6 +1493,7 @@ function SonucOzetiGoster {
 
     # Metrikleri log iceriginden ayristir
     $islenen = 0; $kazanim = ""; $hataSay = 0
+    $uyariDetaylari = [System.Collections.Generic.List[string]]::new()
 
     foreach ($satir in $logIcerik) {
         # Silinen/temizlenen dosya sayilari
@@ -1467,10 +1507,24 @@ function SonucOzetiGoster {
         if ($satir -match 'Toplam\s*:?\s*([\d,\.]+\s*[GMKB]+)') {
             if (-not $kazanim) { $kazanim = $Matches[1] }
         }
-        # Hata sayisi
-        if ($satir -match 'HATA|Atlandi|Silinemedi|Exception') {
+        # Hata/uyari sayisi ve detay toplama
+        if ($satir -match 'HATA|Atlandi|Silinemedi|Exception|UYARI|Basarisiz') {
             $hataSay++
+            $temiz = $satir.Trim()
+            if ($temiz.Length -gt 120) { $temiz = $temiz.Substring(0, 117) + "..." }
+            if ($uyariDetaylari.Count -lt 15) { $uyariDetaylari.Add($temiz) }
         }
+    }
+
+    # Uyari detaylarini log paneline yaz (kullanici NE oldugunu gorsun)
+    if ($uyariDetaylari.Count -gt 0) {
+        CiktiEkle ""
+        CiktiEkle ("━━━ UYARI DETAYLARI ({0} adet) ━━━" -f $hataSay)
+        foreach ($ud in $uyariDetaylari) { CiktiEkle ("  ⚠ " + $ud) }
+        if ($hataSay -gt $uyariDetaylari.Count) {
+            CiktiEkle ("  ... ve " + ($hataSay - $uyariDetaylari.Count) + " uyari daha (log dosyasinda)")
+        }
+        CiktiEkle "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     }
 
     $gecenSure = (Get-Date) - $global:ISLEM_BASLANGIC
@@ -1823,7 +1877,7 @@ function SayfaGoster([string]$sayfa, [string]$katAdi, [array]$katFiltre) {
             $KatIkonBorder.Background = "#FBBF24"
         } elseif ($katAdi -eq "Tüm Araçlar") {
             $TxtKatBaslik.Text = "Tüm Araçlar"
-            $TxtKatAciklama.Text = "54 modülü tek listede görün"
+            $TxtKatAciklama.Text = ($global:MODULLER.Count.ToString() + " modülü tek listede görün")
             $TxtKatIkon.Text = [string][char]0xEA37
             $KatIkonBorder.Background = "#5A6478"
         } else {
@@ -2024,24 +2078,81 @@ $NavPanel.Children.Add($temaNav.Container) | Out-Null
 # == TEMA DESTEGI ==================================================
 $global:TEMA_MODU = "dark"  # dark / light
 
+function TemaUygula([hashtable]$t) {
+    $bc = [System.Windows.Media.BrushConverter]::new()
+    # Ana pencere
+    $window.Background = $bc.ConvertFromString($t.WindowBg)
+    # Dashboard & Kategori arka planlari
+    $DashboardView.Background = $bc.ConvertFromString($t.ContentBg)
+    $CategoryView.Background  = $bc.ConvertFromString($t.ContentBg)
+    # Sidebar
+    $sidebar = $window.FindName("SidebarBorder")
+    # Sidebar parent border — Grid.Column=0'daki ilk Border
+    try {
+        $sideGrid = $window.Content
+        if ($sideGrid -and $sideGrid.Children.Count -gt 0) {
+            $sidePanel = $sideGrid.Children[0]
+            if ($sidePanel -is [System.Windows.Controls.Border]) {
+                $sidePanel.Background = $bc.ConvertFromString($t.SidebarBg)
+                $sidePanel.BorderBrush = $bc.ConvertFromString($t.BorderColor)
+            }
+        }
+    } catch {}
+    # Log paneli
+    $TxtCikti.Foreground = $bc.ConvertFromString($t.LogFg)
+    $TxtCikti.Background = $bc.ConvertFromString($t.LogBg)
+    $ActivityPanel.Background = $bc.ConvertFromString($t.PanelBg)
+    $ActivityPanel.BorderBrush = $bc.ConvertFromString($t.BorderColor)
+    # Treemap arka plan
+    $TreemapPanel.Background = $bc.ConvertFromString($t.ContentBg)
+    $TreemapCanvas.Background = $bc.ConvertFromString($t.ContentBg)
+    # Nav butonlari — metin renklerini guncelle
+    foreach ($nav in $global:NAV_LISTESI) {
+        if ($nav.Label.FontWeight -ne [System.Windows.FontWeights]::SemiBold) {
+            $nav.Icon.Foreground = $bc.ConvertFromString($t.NavIconFg)
+            $nav.Label.Foreground = $bc.ConvertFromString($t.NavLabelFg)
+        }
+    }
+    # Baslik metinleri
+    try {
+        foreach ($tb in @($TxtKatBaslik, $TxtKatAciklama)) {
+            if ($tb) { $tb.Foreground = $bc.ConvertFromString($t.TextPrimary) }
+        }
+    } catch {}
+}
+
 function TemaDegistir {
     if ($global:TEMA_MODU -eq "dark") {
         $global:TEMA_MODU = "light"
-        # Light tema renkleri
-        $window.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F0F2F5")
-        $DashboardView.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F0F2F5")
-        $CategoryView.Background  = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F0F2F5")
-        $TxtCikti.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#2D3748")
-        $TxtCikti.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFFFFF")
+        # ── LIGHT TEMA — Material Design Surface renkleri ──
+        TemaUygula @{
+            WindowBg    = "#F5F5F5"
+            ContentBg   = "#FAFAFA"
+            SidebarBg   = "#FFFFFF"
+            PanelBg     = "#FFFFFF"
+            LogBg       = "#F8F9FA"
+            LogFg       = "#37474F"
+            BorderColor = "#E0E0E0"
+            NavIconFg   = "#90A4AE"
+            NavLabelFg  = "#546E7A"
+            TextPrimary = "#212121"
+        }
         ToastGoster "Tema" "Acik tema uygulandı" "bilgi"
     } else {
         $global:TEMA_MODU = "dark"
-        # Dark tema renkleri (varsayilan)
-        $window.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0B0E14")
-        $DashboardView.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0B0E14")
-        $CategoryView.Background  = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0B0E14")
-        $TxtCikti.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#5A6478")
-        $TxtCikti.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("Transparent")
+        # ── DARK TEMA — Varsayilan ──
+        TemaUygula @{
+            WindowBg    = "#0B0E14"
+            ContentBg   = "#0B0E14"
+            SidebarBg   = "#080B11"
+            PanelBg     = "#080B11"
+            LogBg       = "Transparent"
+            LogFg       = "#5A6478"
+            BorderColor = "#151A26"
+            NavIconFg   = "#4A5066"
+            NavLabelFg  = "#8A8FA0"
+            TextPrimary = "#E8ECF1"
+        }
         ToastGoster "Tema" "Koyu tema uygulandı" "bilgi"
     }
 
@@ -2064,21 +2175,30 @@ function TreemapCiz([string]$surucu) {
     $DashboardView.Visibility = "Collapsed"
     $CategoryView.Visibility  = "Collapsed"
     $TreemapBaslik.Text = "Disk Haritasi - " + $surucu
-    $TreemapBilgi.Text  = "Taranıyor..."
+    $TreemapBilgi.Text  = "Taranıyor... (bu islem birkac saniye surebilir)"
 
-    $window.Dispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
+    try { $window.Dispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background) } catch {}
 
     try {
-        # Ust duzey klasorleri tara (sadece 1 seviye, performans icin)
         $klasorler = [System.Collections.Generic.List[PSCustomObject]]::new()
         $digerBoyut = [long]0
 
         $hedef = if ($surucu -match '^[A-Z]:') { $surucu } else { "C:\" }
-        $items = Get-ChildItem -Path $hedef -Directory -Force -ErrorAction SilentlyContinue
 
+        # Erisim hatasi veren sistem klasorlerini atla
+        $atlanacak = @('$Recycle.Bin','System Volume Information','Config.Msi','$WinREAgent','Recovery','$SysReset','DumpStack.log.tmp')
+        $items = Get-ChildItem -Path $hedef -Directory -Force -ErrorAction SilentlyContinue |
+                 Where-Object { $atlanacak -notcontains $_.Name }
+
+        $toplamKlasor = @($items).Count
+        $sayac = 0
         foreach ($dir in $items) {
+            $sayac++
+            try { $TreemapBilgi.Text = ("Taraniyor: {0} ({1}/{2})" -f $dir.Name, $sayac, $toplamKlasor) } catch {}
+            try { $window.Dispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background) } catch {}
             try {
-                $boyut = (Get-ChildItem $dir.FullName -Recurse -File -Force -ErrorAction SilentlyContinue |
+                # Depth 2 ile sinirla — UI thread'i bloke etmeden makul sonuc
+                $boyut = (Get-ChildItem $dir.FullName -Recurse -File -Force -Depth 2 -ErrorAction SilentlyContinue |
                           Measure-Object Length -Sum -ErrorAction SilentlyContinue).Sum
                 if ($boyut -eq $null) { $boyut = 0 }
 
@@ -2109,7 +2229,7 @@ function TreemapCiz([string]$surucu) {
         $TreemapBilgi.Text = ("{0} klasor, toplam {1}" -f $klasorler.Count, (TreemapBoyutStr $toplamBoyut))
 
         # Canvas boyutunu al
-        $window.Dispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
+        try { $window.Dispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background) } catch {}
         $cW = $TreemapCanvas.ActualWidth;  if ($cW -le 0) { $cW = 700 }
         $cH = $TreemapCanvas.ActualHeight; if ($cH -le 0) { $cH = 400 }
 
@@ -2240,7 +2360,7 @@ $BtnDisaAktar.Add_Click({
         $txtRapor.Add($icerik)
         $txtRapor.Add("")
         $txtRapor.Add("=" * 60)
-        $txtRapor.Add("  SistemBakim v5 - github.com/SistemBakim")
+        $txtRapor.Add("  SistemBakim v5 - github.com/erdiyim/SistemBakim")
         [System.IO.File]::WriteAllLines($txtDosya, $txtRapor.ToArray(), [System.Text.Encoding]::UTF8)
 
         # --- HTML Export ---
