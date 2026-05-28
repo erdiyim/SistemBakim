@@ -11,22 +11,38 @@
 #     SistemBakim_CLI.exe   Komut satiri (CLI) konsol uygulamasi
 #                           Klasik metin tabanli menu
 #
-#   Kullanim    : PowerShell'de calistirin (yonetici gerekmez)
+#   Kullanim    : PowerShell'de src/ klasorunde calistirin
 #   Gereksinim  : PowerShell 5.1+, internet (ilk sefer ps2exe icin)
-#   Cikti       : Ayni klasore iki EXE
+#   Cikti       : bin/ klasorune iki EXE
+#
+#   Klasor Yapisi:
+#     SistemBakim/
+#       src/        Build-EXE.ps1, SistemBakim_GUI.ps1, SistemBakim_v5.ps1
+#       bin/        SistemBakim.exe, SistemBakim_CLI.exe
+#       archive/    Eski yedek EXE dosyalari
+#       tests/      Test scriptleri
+#       docs/       Dokumantasyon
 #
 # ================================================================
 
 $ErrorActionPreference = "Stop"
 
 # ── Dosya Yollari ──────────────────────────────────────────────
-$scriptDir   = Split-Path $MyInvocation.MyCommand.Path
-$v5File      = Join-Path $scriptDir "SistemBakim_v5.ps1"
-$guiFile     = Join-Path $scriptDir "SistemBakim_GUI.ps1"
-$outGUI      = Join-Path $scriptDir "SistemBakim.exe"
-$outCLI      = Join-Path $scriptDir "SistemBakim_CLI.exe"
-$mergedFile  = Join-Path $scriptDir "_Merged_GUI_temp.ps1"
+$srcDir      = Split-Path $MyInvocation.MyCommand.Path
+$rootDir     = Split-Path $srcDir
+$binDir      = Join-Path $rootDir "bin"
+$archiveDir  = Join-Path $rootDir "archive"
+$v5File      = Join-Path $srcDir "SistemBakim_v5.ps1"
+$guiFile     = Join-Path $srcDir "SistemBakim_GUI.ps1"
+$outGUI      = Join-Path $binDir "SistemBakim.exe"
+$outCLI      = Join-Path $binDir "SistemBakim_CLI.exe"
+$mergedFile  = Join-Path $srcDir "_Merged_GUI_temp.ps1"
+$icoFile     = Join-Path $srcDir "sistem.ico"
 $versiyon    = "5.0.0.0"
+
+# ── Cikti klasorlerini olustur ────────────────────────────────
+if (-not (Test-Path $binDir))     { New-Item -ItemType Directory -Path $binDir     -Force | Out-Null }
+if (-not (Test-Path $archiveDir)) { New-Item -ItemType Directory -Path $archiveDir -Force | Out-Null }
 
 # ── Banner ─────────────────────────────────────────────────────
 Clear-Host
@@ -53,7 +69,7 @@ foreach ($f in @($v5File, $guiFile)) {
 if ($eksik) {
     Write-Host ""
     Write-Host "  Build-EXE.ps1, SistemBakim_v5.ps1 ve SistemBakim_GUI.ps1" -ForegroundColor Yellow
-    Write-Host "  ayni klasorde olmalidir." -ForegroundColor Yellow
+    Write-Host "  src/ klasorunde olmalidir." -ForegroundColor Yellow
     Read-Host "  Cikis icin Enter"
     exit 1
 }
@@ -124,15 +140,15 @@ for ($i = 0; $i -lt $guiLines.Count; $i++) {
         continue
     }
 
-    # ── $KLASOR satirini degistir (ps2exe uyumlu) ──
-    if ($line -match '^\s*\$KLASOR\s*=') {
-        $processed.Add('$KLASOR = Split-Path ([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)')
+    # ── $KLASOR / $script:KLASOR / $global:KLASOR satirini degistir (ps2exe uyumlu) ──
+    if ($line -match '^\s*\$(script:|global:)?KLASOR\s*=') {
+        $processed.Add('$global:KLASOR = Split-Path ([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)')
         continue
     }
 
-    # ── $BACKEND satirini degistir (temp dosyaya yonlendir) ──
-    if ($line -match '^\s*\$BACKEND\s*=') {
-        $processed.Add('$BACKEND = Join-Path $env:TEMP "SistemBakim_v5_runtime.ps1"')
+    # ── $BACKEND / $script:BACKEND / $global:BACKEND satirini degistir (temp dosyaya yonlendir) ──
+    if ($line -match '^\s*\$(script:|global:)?BACKEND\s*=') {
+        $processed.Add('$global:BACKEND = Join-Path $env:TEMP "SistemBakim_v5_runtime.ps1"')
         continue
     }
 
@@ -225,28 +241,33 @@ Write-Host ("         Birlesik script: {0} KB" -f $mergedKB) -ForegroundColor Da
 # ════════════════════════════════════════════════════════════════
 Write-Host "  [4/5]  GUI EXE derleniyor..." -ForegroundColor Cyan
 
-# Mevcut EXE'leri yedekle
+# Mevcut EXE'leri archive/ klasorune yedekle
 foreach ($exeYol in @($outGUI, $outCLI)) {
     if (Test-Path $exeYol) {
-        $yedekAd = $exeYol -replace '\.exe$', ("_yedek_{0}.exe" -f (Get-Date -Format "yyyyMMdd_HHmm"))
-        Move-Item -Path $exeYol -Destination $yedekAd -Force
-        Write-Host ("         Yedeklendi: " + (Split-Path $yedekAd -Leaf)) -ForegroundColor DarkGray
+        $exeAd   = [System.IO.Path]::GetFileNameWithoutExtension($exeYol)
+        $yedekAd = "{0}_yedek_{1}.exe" -f $exeAd, (Get-Date -Format "yyyyMMdd_HHmm")
+        $yedekYol = Join-Path $archiveDir $yedekAd
+        Move-Item -Path $exeYol -Destination $yedekYol -Force
+        Write-Host ("         Yedeklendi: archive\" + $yedekAd) -ForegroundColor DarkGray
     }
 }
 
 try {
-    Invoke-ps2exe `
-        -inputFile    $mergedFile `
-        -outputFile   $outGUI `
-        -noConsole `
-        -STA `
-        -requireAdmin `
-        -title        "Sistem Bakim Araci" `
-        -description  "Windows Performans, Temizlik ve Oyun Optimizasyon Araci - 53 Modul" `
-        -company      "Erdi" `
-        -product      "SistemBakim" `
-        -version      $versiyon `
-        -copyright    "2025 Erdi"
+    $ps2exeParams = @{
+        inputFile    = $mergedFile
+        outputFile   = $outGUI
+        noConsole    = $true
+        STA          = $true
+        requireAdmin = $true
+        title        = "Sistem Bakim Araci"
+        description  = "Windows Performans, Temizlik ve Oyun Optimizasyon Araci - 53 Modul"
+        company      = "Erdi"
+        product      = "SistemBakim"
+        version      = $versiyon
+        copyright    = "2025 Erdi"
+    }
+    if (Test-Path $icoFile) { $ps2exeParams["iconFile"] = $icoFile }
+    Invoke-ps2exe @ps2exeParams
 
     if (Test-Path $outGUI) {
         $guiMB = [Math]::Round((Get-Item $outGUI).Length / 1MB, 2)
@@ -266,17 +287,19 @@ try {
 Write-Host "  [5/5]  CLI EXE derleniyor..." -ForegroundColor Cyan
 
 try {
-    Invoke-ps2exe `
-        -inputFile    $v5File `
-        -outputFile   $outCLI `
-        -noConsole:$false `
-        -requireAdmin `
-        -title        "Sistem Bakim Araci - CLI" `
-        -description  "Windows Performans, Temizlik ve Oyun Optimizasyon Araci - 53 Modul - Konsol" `
-        -company      "Erdi" `
-        -product      "SistemBakim CLI" `
-        -version      $versiyon `
-        -copyright    "2025 Erdi"
+    $ps2exeParamsCLI = @{
+        inputFile    = $v5File
+        outputFile   = $outCLI
+        requireAdmin = $true
+        title        = "Sistem Bakim Araci - CLI"
+        description  = "Windows Performans, Temizlik ve Oyun Optimizasyon Araci - 53 Modul - Konsol"
+        company      = "Erdi"
+        product      = "SistemBakim CLI"
+        version      = $versiyon
+        copyright    = "2025 Erdi"
+    }
+    if (Test-Path $icoFile) { $ps2exeParamsCLI["iconFile"] = $icoFile }
+    Invoke-ps2exe @ps2exeParamsCLI
 
     if (Test-Path $outCLI) {
         $cliMB = [Math]::Round((Get-Item $outCLI).Length / 1MB, 2)
@@ -305,7 +328,7 @@ if (Test-Path $outGUI) {
     $boyMB = [Math]::Round((Get-Item $outGUI).Length / 1MB, 2)
     $boyKB = [Math]::Round((Get-Item $outGUI).Length / 1KB, 0)
     $boyStr = if ($boyMB -ge 1) { "$boyMB MB" } else { "$boyKB KB" }
-    Write-Host "  GUI UYGULAMA — SistemBakim.exe" -ForegroundColor Cyan
+    Write-Host "  GUI UYGULAMA — bin\SistemBakim.exe" -ForegroundColor Cyan
     Write-Host ("    Boyut    : " + $boyStr) -ForegroundColor White
     Write-Host ("    Versiyon : " + $versiyon) -ForegroundColor White
     Write-Host "    Tip      : Windows pencere uygulamasi" -ForegroundColor Gray
@@ -320,7 +343,7 @@ if (Test-Path $outCLI) {
     $boyMB = [Math]::Round((Get-Item $outCLI).Length / 1MB, 2)
     $boyKB = [Math]::Round((Get-Item $outCLI).Length / 1KB, 0)
     $boyStr = if ($boyMB -ge 1) { "$boyMB MB" } else { "$boyKB KB" }
-    Write-Host "  CLI UYGULAMA — SistemBakim_CLI.exe" -ForegroundColor Cyan
+    Write-Host "  CLI UYGULAMA — bin\SistemBakim_CLI.exe" -ForegroundColor Cyan
     Write-Host ("    Boyut    : " + $boyStr) -ForegroundColor White
     Write-Host ("    Versiyon : " + $versiyon) -ForegroundColor White
     Write-Host "    Tip      : Konsol uygulamasi" -ForegroundColor Gray
@@ -328,8 +351,13 @@ if (Test-Path $outCLI) {
     Write-Host ""
 }
 
+Write-Host "  KLASOR YAPISI:" -ForegroundColor Yellow
+Write-Host "    src/       Kaynak kodlar (.ps1)" -ForegroundColor Gray
+Write-Host "    bin/       Calistirilabilir EXE dosyalari" -ForegroundColor Gray
+Write-Host "    archive/   Eski EXE yedekleri" -ForegroundColor Gray
+Write-Host ""
 Write-Host "  DAGITIM:" -ForegroundColor Yellow
-Write-Host "    EXE dosyasini kopyalayin, paylassin, calistirin." -ForegroundColor Gray
+Write-Host "    bin\ klasorundeki EXE dosyasini kopyalayin, paylassin." -ForegroundColor Gray
 Write-Host "    Kullanicinin PowerShell bilgisi gerekmez." -ForegroundColor Gray
 Write-Host "    Tek dosya yeterli — ek script/DLL gerekmez." -ForegroundColor Gray
 Write-Host ""

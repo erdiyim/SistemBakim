@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SistemBakim v5.0 — The Ultimate Windows Maintenance Toolkit</title>
+    <meta name="description" content="69 modules. Dark WPF UI. Zero dependencies. Single EXE. Your PC, fully optimized.">
+    <meta name="theme-color" content="#7C5CFC">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="SistemBakim v5.0">
+    <meta property="og:description" content="The Ultimate Windows Maintenance Toolkit — 69 modules, single EXE, zero bloat.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://erdi.github.io/SistemBakim/">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50:  '#F0EBFF',
+                            100: '#E0D6FF',
+                            200: '#C2ADFF',
+                            300: '#A385FF',
+                            400: '#8F6FFF',
+                            500: '#7C5CFC',
+                            600: '#6344D9',
+                            700: '#4C30B6',
+                            800: '#372193',
+                            900: '#261570',
+                        },
+                        surface: {
+                            900: '#0B0E14',
+                            800: '#111520',
+                            700: '#181D2A',
+                            600: '#1F2537',
+                            500: '#2A3149',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 3s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.6s ease-out forwards',
+                        'fade-in': 'fadeIn 0.8s ease-out forwards',
+                        'counter': 'counter 2s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-12px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(124,92,252,0.15)' },
+                            '100%': { boxShadow: '0 0 40px rgba(124,92,252,0.35)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0B0E14; }
+        ::-webkit-scrollbar-thumb { background: #2A3149; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #7C5CFC; }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #7C5CFC 0%, #A385FF 50%, #C2ADFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Hero gradient background */
+        .hero-gradient {
+            background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,92,252,0.15) 0%, transparent 60%),
+                        radial-gradient(ellipse 50% 40% at 80% 50%, rgba(99,68,217,0.08) 0%, transparent 50%);
+        }
+
+        /* Card hover glow */
+        .card-glow {
+            transition: all 0.3s ease;
+        }
+        .card-glow:hover {
+            border-color: rgba(124,92,252,0.4);
+            box-shadow: 0 0 30px rgba(124,92,252,0.1), 0 20px 40px rgba(0,0,0,0.3);
+            transform: translateY(-4px);
+        }
+
+        /* Grid pattern overlay */
+        .grid-pattern {
+            background-image: linear-gradient(rgba(124,92,252,0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(124,92,252,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Stat counter animation */
+        .stat-number {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Smooth section transitions */
+        section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Download button pulse */
+        .btn-download {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-download::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s ease;
+        }
+        .btn-download:hover::before {
+            transform: translate(-50%, -50%) scale(1);
+        }
+    </style>
+</head>
+
+<body class="bg-surface-900 text-gray-200 font-sans antialiased overflow-x-hidden">
+
+    <!-- ==================== NAVBAR ==================== -->
+    <nav class="fixed top-0 w-full z-50 bg-surface-900/80 backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-8 h-8 rounded-lg bg-brand-500/20 flex items-center justify-center group-hover:bg-brand-500/30 transition-colors">
+                    <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <span class="font-bold text-white text-lg">SistemBakim</span>
+                <span class="text-[10px] font-mono text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full">v5.0</span>
+            </a>
+
+            <!-- Nav Links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#features" class="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
+                <a href="#stats" class="text-sm text-gray-400 hover:text-white transition-colors">Stats</a>
+                <a href="#safety" class="text-sm text-gray-400 hover:text-white transition-colors">Safety</a>
+                <a href="https://github.com/erdi/SistemBakim" target="_blank" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    GitHub
+                </a>
+            </div>
+
+            <!-- CTA Button -->
+            <a href="https://github.com/erdi/SistemBakim/releases/latest" target="_blank"
+               class="hidden sm:inline-flex items-center gap-2 px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-lg transition-all hover:shadow-lg hover:shadow-brand-500/25">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Download
+            </a>
+        </div>
+    </nav>
+
+
+    <!-- ==================== HERO ==================== -->
+    <section class="visible relative min-h-screen flex items-center justify-center hero-gradient grid-pattern pt-16">
+        <!-- Floating orbs -->
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-brand-500/5 rounded-full blur-3xl animate-float"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-48 h-48 bg-brand-700/5 rounded-full blur-3xl animate-float" style="animation-delay: -3s;"></div>
+
+        <div class="relative max-w-4xl mx-auto px-6 text-center">
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-500/10 border border-brand-500/20 rounded-full mb-8 animate-fade-in">
+                <span class="w-2 h-2 bg-brand-400 rounded-full animate-pulse"></span>
+                <span class="text-sm text-brand-300 font-medium">v5.0 — The Ultimate Release</span>
+            </div>
+
+            <!-- Headline -->
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6 animate-slide-up">
+                Your PC.<br>
+                <span class="gradient-text">Fully Optimized.</span>
+            </h1>
+
+            <!-- Subheadline -->
+            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed animate-slide-up" style="animation-delay: 0.15s;">
+                69 modules. Dark WPF interface. Zero dependencies. Single EXE.
+                <br class="hidden sm:block">
+                Everything your system needs — nothing it doesn't.
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up" style="animation-delay: 0.3s;">
+                <a href="https://github.com/erdi/SistemBakim/releases/latest" target="_blank"
+                   class="btn-download inline-flex items-center gap-3 px-8 py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-lg transition-all hover:shadow-xl hover:shadow-brand-500/30 hover:-translate-y-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download Setup
+                    <span class="text-xs opacity-60 font-normal">(~1 MB)</span>
+                </a>
+                <a href="https://github.com/erdi/SistemBakim" target="_blank"
+                   class="inline-flex items-center gap-2 px-6 py-4 text-gray-300 hover:text-white font-medium rounded-xl border border-white/10 hover:border-white/20 transition-all hover:bg-white/5">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    View on GitHub
+                </a>
+            </div>
+
+            <!-- Hero visual: Terminal mockup -->
+            <div class="max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.45s;">
+                <div class="bg-surface-800 rounded-2xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden animate-glow">
+                    <!-- Title bar -->
+                    <div class="flex items-center gap-2 px-4 py-3 bg-surface-700 border-b border-white/5">
+                        <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                        <span class="ml-3 text-xs text-gray-500 font-mono">SistemBakim v5.0</span>
+                    </div>
+                    <!-- Terminal content -->
+                    <div class="p-6 font-mono text-sm leading-relaxed">
+                        <p class="text-gray-500">$ SistemBakim.exe</p>
+                        <p class="text-brand-400 mt-2">&#9608; SistemBakim v5.0 baslatiliyor...</p>
+                        <p class="text-gray-400 mt-1">&nbsp;&nbsp;69 modul yuklendi</p>
+                        <p class="text-gray-400">&nbsp;&nbsp;Yonetici yetkileri dogrulandi</p>
+                        <p class="text-green-400 mt-2">&#10003; Sistem Saglik Skoru: 94/100</p>
+                        <p class="text-green-400">&#10003; Derin Temizlik: 2.4 GB bosaltildi</p>
+                        <p class="text-green-400">&#10003; FPS Optimizer: 11 tweak uygulandi</p>
+                        <p class="text-green-400">&#10003; Gizlilik Kalkani: 25 ayar korunuyor</p>
+                        <p class="text-brand-300 mt-3">&#9472;&#9472; Tamamlandi. Sistem optimize edildi. &#9472;&#9472;</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+            </svg>
+        </div>
+    </section>
+
+
+    <!-- ==================== STATS BAR ==================== -->
+    <section id="stats" class="relative py-20 border-y border-white/5 bg-surface-800/50">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+                <div class="text-center">
+                    <div class="text-4xl md:text-5xl font-black text-white stat-number" data-target="69">0</div>
+                    <div class="text-sm text-gray-500 mt-2 font-medium uppercase tracking-wider">Modules</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl md:text-5xl font-black text-white stat-number" data-target="8900">0</div>
+                    <div class="text-sm text-gray-500 mt-2 font-medium uppercase tracking-wider">Lines of Code</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl md:text-5xl font-black text-white stat-number" data-target="338">0</div>
+                    <div class="text-sm text-gray-500 mt-2 font-medium uppercase tracking-wider">KB EXE Size</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl md:text-5xl font-black gradient-text stat-number" data-target="0" data-display="ZERO">ZERO</div>
+                    <div class="text-sm text-gray-500 mt-2 font-medium uppercase tracking-wider">Dependencies</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ==================== FEATURES ==================== -->
+    <section id="features" class="relative py-24 md:py-32">
+        <div class="max-w-6xl mx-auto px-6">
+            <!-- Section header -->
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-black text-white mb-4">
+                    Everything You Need.<br>
+                    <span class="gradient-text">Nothing You Don't.</span>
+                </h2>
+                <p class="text-gray-400 text-lg max-w-xl mx-auto">
+                    69 modules across 7 categories. Each one does exactly what it says — no upsells, no subscriptions.
+                </p>
+            </div>
+
+            <!-- Feature Cards Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Card 1: Deep Clean -->
+                <div class="card-glow bg-surface-800 border border-white/5 rounded-2xl p-7">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Deep Clean</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        19 locations scanned: temp files, browser caches, shader caches, prefetch — with locked-file reporting so you know exactly what was skipped.
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="text-xs px-2.5 py-1 bg-blue-500/10 text-blue-400 rounded-full">Registry</span>
+                        <span class="text-xs px-2.5 py-1 bg-blue-500/10 text-blue-400 rounded-full">Browser</span>
+                        <span class="text-xs px-2.5 py-1 bg-blue-500/10 text-blue-400 rounded-full">WinSxS</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: FPS Optimizer -->
+                <div class="card-glow bg-surface-800 border border-white/5 rounded-2xl p-7">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">FPS Optimizer</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        11 gaming tweaks in one click: GameDVR, MMCSS priority, Nagle algorithm, HAGS, mouse raw input, power plan — all individually reversible.
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="text-xs px-2.5 py-1 bg-purple-500/10 text-purple-400 rounded-full">Gaming</span>
+                        <span class="text-xs px-2.5 py-1 bg-purple-500/10 text-purple-400 rounded-full">Turbo</span>
+                        <span class="text-xs px-2.5 py-1 bg-purple-500/10 text-purple-400 rounded-full">RAM</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Privacy Shield -->
+                <div class="card-glow bg-surface-800 border border-white/5 rounded-2xl p-7">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Privacy Shield</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        25 privacy toggles: AdvertisingID, Location, Camera, Microphone, Telemetry, Timeline, Speech, WiFi Sense, SmartScreen and more.
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="text-xs px-2.5 py-1 bg-green-500/10 text-green-400 rounded-full">Shredder</span>
+                        <span class="text-xs px-2.5 py-1 bg-green-500/10 text-green-400 rounded-full">USB</span>
+                        <span class="text-xs px-2.5 py-1 bg-green-500/10 text-green-400 rounded-full">Hosts</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Network Suite -->
+                <div class="card-glow bg-surface-800 border border-white/5 rounded-2xl p-7">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Network Suite</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Live bandwidth monitor, DNS benchmark with 12 servers, WiFi device scanner, and internet speed test via Cloudflare — all built in.
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="text-xs px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full">Monitor</span>
+                        <span class="text-xs px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full">DNS</span>
+                        <span class="text-xs px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full">Speed</span>
+                    </div>
+                </div>
+
+                <!-- Card 5: Disk Treemap -->
+                <div class="card-glow bg-surface-800 border border-white/5 rounded-2xl p-7">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Disk Treemap</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        WinDirStat-style visual block map of your entire drive. Color-coded by file type, with files under 50MB grouped for clarity.
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="text-xs px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full">Visual</span>
+                        <span class="text-xs px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full">Reports</span>
+                        <span class="text-xs px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full">Export</span>
+                    </div>
+                </div>
+
+                <!-- Card 6: Service Configurator -->
+                <div class="card-glow bg-surface-800 border border-white/5 rounded-2xl p-7">
+                    <div class="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Service Configurator</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Gaming, Office, and Daily profiles for Windows services. 21 critical services are hardcoded as protected. Full JSON backup before any change.
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="text-xs px-2.5 py-1 bg-rose-500/10 text-rose-400 rounded-full">Profiles</span>
+                        <span class="text-xs px-2.5 py-1 bg-rose-500/10 text-rose-400 rounded-full">Backup</span>
+                        <span class="text-xs px-2.5 py-1 bg-rose-500/10 text-rose-400 rounded-full">Safe</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ==================== SAFETY ==================== -->
+    <section id="safety" class="relative py-24 md:py-32 bg-surface-800/30">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <!-- Left: Text -->
+                <div>
+                    <h2 class="text-3xl md:text-5xl font-black text-white mb-6">
+                        Designed to<br>
+                        <span class="gradient-text">Never Break</span> Your System.
+                    </h2>
+                    <p class="text-gray-400 text-lg leading-relaxed mb-8">
+                        Every optimization is reversible. Every destructive action requires confirmation. Every change creates a backup first.
+                    </p>
+
+                    <div class="space-y-5">
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-semibold mb-1">21 Protected Services</h4>
+                                <p class="text-gray-500 text-sm">WinDefend, RpcSs, EventLog and 18 more are hardcoded as untouchable. No profile can disable them.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-semibold mb-1">Automatic .reg Backups</h4>
+                                <p class="text-gray-500 text-sm">Every registry operation creates a backup file. Double-click to restore — it's that simple.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-semibold mb-1">Fully Reversible</h4>
+                                <p class="text-gray-500 text-sm">Context menus use rename-not-delete. Startup apps are delayed, not removed. Everything can be undone.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-semibold mb-1">Zero Telemetry</h4>
+                                <p class="text-gray-500 text-sm">No internet connection required. No data sent anywhere. No cloud dependencies. Fully offline.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Code block -->
+                <div class="bg-surface-900 rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+                    <div class="flex items-center gap-2 px-4 py-3 bg-surface-700 border-b border-white/5">
+                        <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                        <span class="ml-3 text-xs text-gray-500 font-mono">safety.ps1</span>
+                    </div>
+                    <pre class="p-6 text-sm font-mono leading-relaxed overflow-x-auto"><code class="text-gray-300"><span class="text-gray-600"># 21 critical services — never touched</span>
+<span class="text-brand-400">$korunanlar</span> = <span class="text-green-400">@(</span>
+  <span class="text-amber-300">'WinDefend'</span>, <span class="text-amber-300">'RpcSs'</span>,
+  <span class="text-amber-300">'EventLog'</span>,  <span class="text-amber-300">'Dhcp'</span>,
+  <span class="text-amber-300">'DcomLaunch'</span>, <span class="text-amber-300">'LSM'</span>,
+  <span class="text-amber-300">'PlugPlay'</span>,   <span class="text-amber-300">'Power'</span>
+  <span class="text-gray-600"># ... 13 more</span>
+<span class="text-green-400">)</span>
+
+<span class="text-gray-600"># Registry backup before ANY change</span>
+<span class="text-cyan-400">reg export</span> <span class="text-amber-300">$key</span> <span class="text-amber-300">"$backup.reg"</span>
+
+<span class="text-gray-600"># Confirmation gate</span>
+<span class="text-blue-400">if</span> (<span class="text-brand-400">Onay</span> <span class="text-amber-300">"Devam?"</span>) {
+  <span class="text-gray-600"># Only then proceed</span>
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ==================== COMPARISON ==================== -->
+    <section class="relative py-24 md:py-32">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-black text-white mb-4">
+                    Why Not <span class="gradient-text">The Others?</span>
+                </h2>
+            </div>
+
+            <div class="bg-surface-800 rounded-2xl border border-white/5 overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-white/5">
+                            <th class="text-left py-4 px-6 text-gray-500 font-medium"></th>
+                            <th class="py-4 px-4 text-center">
+                                <span class="text-brand-400 font-bold">SistemBakim</span>
+                            </th>
+                            <th class="py-4 px-4 text-center text-gray-500">CCleaner</th>
+                            <th class="py-4 px-4 text-center text-gray-500">IObit</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-400">
+                        <tr class="border-b border-white/5">
+                            <td class="py-3.5 px-6">Free (no upsells)</td>
+                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                        </tr>
+                        <tr class="border-b border-white/5">
+                            <td class="py-3.5 px-6">No internet required</td>
+                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                        </tr>
+                        <tr class="border-b border-white/5">
+                            <td class="py-3.5 px-6">Zero telemetry</td>
+                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                        </tr>
+                        <tr class="border-b border-white/5">
+                            <td class="py-3.5 px-6">Single portable EXE</td>
+                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                        </tr>
+                        <tr class="border-b border-white/5">
+                            <td class="py-3.5 px-6">Open source</td>
+                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                        </tr>
+                        <tr class="border-b border-white/5">
+                            <td class="py-3.5 px-6">FPS / Gaming optimizer</td>
+                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-4 text-center text-yellow-400">~</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3.5 px-6">Disk treemap</td>
+                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ==================== CTA ==================== -->
+    <section class="relative py-24 md:py-32 border-t border-white/5">
+        <div class="absolute inset-0 hero-gradient"></div>
+        <div class="relative max-w-3xl mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-5xl font-black text-white mb-6">
+                Ready to Take Control?
+            </h2>
+            <p class="text-gray-400 text-lg mb-10 max-w-xl mx-auto">
+                Download SistemBakim, run it as Administrator, and see the difference in minutes. No signup. No payment. No strings.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="https://github.com/erdi/SistemBakim/releases/latest" target="_blank"
+                   class="btn-download inline-flex items-center gap-3 px-8 py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-lg transition-all hover:shadow-xl hover:shadow-brand-500/30 hover:-translate-y-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download v5.0
+                </a>
+                <a href="https://github.com/erdi/SistemBakim/releases/latest" target="_blank"
+                   class="inline-flex items-center gap-2 px-6 py-4 text-gray-300 hover:text-white font-medium rounded-xl border border-white/10 hover:border-white/20 transition-all hover:bg-white/5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Portable EXE
+                </a>
+            </div>
+
+            <!-- Trust signals -->
+            <div class="flex items-center justify-center gap-6 mt-10 text-xs text-gray-600">
+                <span class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    No malware
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
+                    No internet needed
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    No data collected
+                </span>
+            </div>
+
+            <!-- SmartScreen Notice -->
+            <div class="mt-12 max-w-xl mx-auto">
+                <details class="bg-surface-800/60 border border-white/5 rounded-xl overflow-hidden group">
+                    <summary class="px-6 py-4 cursor-pointer flex items-center gap-3 text-sm text-gray-400 hover:text-gray-300 transition-colors">
+                        <svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                        <span>Windows SmartScreen uyarisi mi aldiniz? / Getting a SmartScreen warning?</span>
+                        <svg class="w-4 h-4 ml-auto text-gray-600 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </summary>
+                    <div class="px-6 pb-5 text-sm text-gray-500 leading-relaxed space-y-3 border-t border-white/5 pt-4">
+                        <p>
+                            <strong class="text-gray-300">Bu tamamen normaldir.</strong> Windows, dijital imza sertifikasi ($300+/yil) olmayan tum uygulamalarda bu uyariyi gosterir. Guvenlikle ilgisi yoktur.
+                        </p>
+                        <p>
+                            SistemBakim %100 acik kaynak, sifir internet baglantisi, sifir telemetri ile calisir. Tum kodu bu depoda gorebilirsiniz.
+                        </p>
+                        <p class="text-gray-400">
+                            <strong>Gecmek icin:</strong> "Ek bilgi" (More info) → "Yine de calistir" (Run anyway)
+                        </p>
+                    </div>
+                </details>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="border-t border-white/5 py-12">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <!-- Left -->
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm text-gray-500">
+                        Built with obsession by
+                        <a href="https://github.com/erdi" target="_blank" class="text-gray-400 hover:text-white transition-colors">Erdi</a>
+                        +
+                        <a href="https://claude.ai" target="_blank" class="text-gray-400 hover:text-white transition-colors">Claude</a>
+                    </span>
+                </div>
+
+                <!-- Right -->
+                <div class="flex items-center gap-6">
+                    <a href="https://github.com/erdi/SistemBakim" target="_blank" class="text-gray-500 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </a>
+                    <span class="text-xs text-gray-600">Personal & non-commercial use</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- ==================== SCRIPTS ==================== -->
+    <script>
+        // Intersection Observer for section animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Animated counters
+        function animateCounters() {
+            document.querySelectorAll('.stat-number').forEach(el => {
+                const target = parseInt(el.dataset.target);
+                const display = el.dataset.display;
+                if (display) return; // Skip "ZERO" display
+
+                const duration = 2000;
+                const start = performance.now();
+
+                function update(now) {
+                    const elapsed = now - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    // Ease out cubic
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const current = Math.round(eased * target);
+
+                    if (target > 1000) {
+                        el.textContent = current.toLocaleString() + '+';
+                    } else {
+                        el.textContent = current;
+                    }
+
+                    if (progress < 1) {
+                        requestAnimationFrame(update);
+                    }
+                }
+                requestAnimationFrame(update);
+            });
+        }
+
+        // Trigger counters when stats section is visible
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounters();
+                    statsObserver.disconnect();
+                }
+            });
+        }, { threshold: 0.3 });
+
+        const statsSection = document.getElementById('stats');
+        if (statsSection) statsObserver.observe(statsSection);
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

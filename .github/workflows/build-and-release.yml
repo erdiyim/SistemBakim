@@ -1,0 +1,201 @@
+# ============================================================
+#  SistemBakim — Automated Build & Release Pipeline
+#
+#  Tetikleme : Yeni bir versiyon etiketi push'landiginda (v*)
+#  Islem     : Build EXE → Build Installer → GitHub Release'e yukle
+#
+#  Kullanim  :
+#    git tag v5.1
+#    git push origin v5.1
+#
+#  Pipeline otomatik olarak:
+#    1. ps2exe ile GUI + CLI EXE dosyalarini olusturur
+#    2. Inno Setup ile Setup installer'i derler
+#    3. Uretilen 3 dosyayi (GUI EXE, CLI EXE, Setup EXE) Release'e yukler
+# ============================================================
+
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Ayni anda birden fazla release build'i engelle
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: SistemBakim
+
+jobs:
+  build-and-release:
+    name: Build EXE & Installer → Release
+    runs-on: windows-latest
+
+    steps:
+      # ────────────────────────────────────────────────────────────
+      #  1. Checkout
+      # ────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ────────────────────────────────────────────────────────────
+      #  2. Versiyon bilgisini etiketden cikart
+      # ────────────────────────────────────────────────────────────
+      - name: Extract version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $ver = $tag -replace '^v', ''
+          echo "TAG=$tag" >> $env:GITHUB_OUTPUT
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+          Write-Host "Building version: $ver (tag: $tag)"
+
+      # ────────────────────────────────────────────────────────────
+      #  3. ps2exe modulunu kur
+      # ────────────────────────────────────────────────────────────
+      - name: Install ps2exe module
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name ps2exe -Scope CurrentUser -Force -AllowClobber
+          Import-Module ps2exe -Force
+          Write-Host "ps2exe installed: $((Get-Module ps2exe).Version)"
+
+      # ────────────────────────────────────────────────────────────
+      #  4. Build-EXE.ps1 ile GUI + CLI EXE olustur
+      # ────────────────────────────────────────────────────────────
+      - name: Build GUI & CLI executables
+        shell: pwsh
+        working-directory: src
+        run: |
+          # Build-EXE.ps1 stdin'den Read-Host bekler, bos satir gonder
+          echo "" | powershell -NoProfile -ExecutionPolicy Bypass -File "Build-EXE.ps1"
+
+      # ────────────────────────────────────────────────────────────
+      #  5. EXE ciktisini dogrula
+      # ────────────────────────────────────────────────────────────
+      - name: Verify build output
+        shell: pwsh
+        run: |
+          $guiExe = "bin\SistemBakim.exe"
+          $cliExe = "bin\SistemBakim_CLI.exe"
+
+          if (-not (Test-Path $guiExe)) { throw "BUILD FAILED: $guiExe not found" }
+          if (-not (Test-Path $cliExe)) { throw "BUILD FAILED: $cliExe not found" }
+
+          $guiSize = [Math]::Round((Get-Item $guiExe).Length / 1KB)
+          $cliSize = [Math]::Round((Get-Item $cliExe).Length / 1KB)
+          Write-Host "GUI EXE: ${guiSize} KB"
+          Write-Host "CLI EXE: ${cliSize} KB"
+
+          # Mantik kontrolu: EXE 50 KB'den kucukse bir seyler yanlis
+          if ($guiSize -lt 50) { throw "GUI EXE suspiciously small: ${guiSize} KB" }
+          if ($cliSize -lt 50) { throw "CLI EXE suspiciously small: ${cliSize} KB" }
+
+      # ────────────────────────────────────────────────────────────
+      #  6. Inno Setup 6 kur
+      # ────────────────────────────────────────────────────────────
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: |
+          $innoUrl = "https://jrsoftware.org/download.php/is.exe"
+          $innoInstaller = "$env:TEMP\innosetup.exe"
+
+          Write-Host "Downloading Inno Setup..."
+          Invoke-WebRequest -Uri $innoUrl -OutFile $innoInstaller -UseBasicParsing
+
+          Write-Host "Installing Inno Setup silently..."
+          Start-Process -FilePath $innoInstaller -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=C:\InnoSetup" -Wait -NoNewWindow
+
+          if (-not (Test-Path "C:\InnoSetup\ISCC.exe")) {
+            throw "Inno Setup installation failed: ISCC.exe not found"
+          }
+          Write-Host "Inno Setup installed successfully."
+
+      # ────────────────────────────────────────────────────────────
+      #  7. Installer derle
+      # ────────────────────────────────────────────────────────────
+      - name: Compile Inno Setup installer
+        shell: pwsh
+        run: |
+          $issFile = "installer\SistemBakim_Setup.iss"
+          $iscc    = "C:\InnoSetup\ISCC.exe"
+
+          if (-not (Test-Path $issFile)) { throw "ISS file not found: $issFile" }
+
+          Write-Host "Compiling installer..."
+          & $iscc $issFile
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+
+          # Cikti dogrula
+          $setupExe = "installer\output\SistemBakim_v${{ steps.version.outputs.VERSION }}_Setup.exe"
+          if (-not (Test-Path $setupExe)) {
+            # Fallback: ISS icindeki versiyon etiketle uyusmayabilir
+            $found = Get-ChildItem "installer\output\*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              Write-Host "Setup EXE found at: $($found.FullName)"
+              echo "SETUP_EXE=$($found.FullName)" >> $env:GITHUB_ENV
+            } else {
+              throw "Installer build failed: no EXE in installer\output\"
+            }
+          } else {
+            $setupSize = [Math]::Round((Get-Item $setupExe).Length / 1KB)
+            Write-Host "Setup EXE: ${setupSize} KB"
+            echo "SETUP_EXE=$setupExe" >> $env:GITHUB_ENV
+          }
+
+      # ────────────────────────────────────────────────────────────
+      #  8. Build artifaktlarini yedekle (debug icin)
+      # ────────────────────────────────────────────────────────────
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output-${{ steps.version.outputs.TAG }}
+          path: |
+            bin/SistemBakim.exe
+            bin/SistemBakim_CLI.exe
+            installer/output/*.exe
+          retention-days: 30
+
+      # ────────────────────────────────────────────────────────────
+      #  9. GitHub Release olustur ve dosyalari yukle
+      # ────────────────────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: "SistemBakim ${{ steps.version.outputs.TAG }}"
+          body: |
+            ## SistemBakim ${{ steps.version.outputs.TAG }}
+
+            ### Downloads
+
+            | File | Description |
+            |------|-------------|
+            | `SistemBakim_v${{ steps.version.outputs.VERSION }}_Setup.exe` | **Recommended** — Full installer with Start Menu & Desktop shortcuts |
+            | `SistemBakim.exe` | Portable GUI — single file, run as Administrator |
+            | `SistemBakim_CLI.exe` | Portable CLI — command-line interface |
+
+            ### Requirements
+            - Windows 10 or 11 (64-bit)
+            - Administrator privileges
+            - No additional dependencies
+
+            ---
+            *Automated release by GitHub Actions*
+          files: |
+            bin/SistemBakim.exe
+            bin/SistemBakim_CLI.exe
+            ${{ env.SETUP_EXE }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

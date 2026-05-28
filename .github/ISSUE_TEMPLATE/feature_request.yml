@@ -1,0 +1,110 @@
+name: "\U0001F4A1 Feature Request / Ozellik Istegi"
+description: "Yeni bir modul veya ozellik onerin. / Suggest a new module or feature."
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Ozellik Istegi / Feature Request
+
+        SistemBakim'i daha iyi hale getirmek icin fikirlerinizi paylasın!
+        *Share your ideas to make SistemBakim even better!*
+
+  # ── Ozellik Kategorisi ────────────────────────────────────────
+
+  - type: dropdown
+    id: kategori
+    attributes:
+      label: "Kategori / Category"
+      description: "Oneriniz hangi kategoriye giriyor?"
+      options:
+        - "Temizlik & Disk (Cleaning & Disk)"
+        - "Performans & Oyun (Performance & Gaming)"
+        - "Gizlilik & Guvenlik (Privacy & Security)"
+        - "Ag & Izleme (Network & Monitoring)"
+        - "Raporlama & Otomasyon (Reports & Automation)"
+        - "Kullanici Arayuzu / GUI (User Interface)"
+        - "Komut Satiri / CLI (Command Line)"
+        - "Diger / Other"
+    validations:
+      required: true
+
+  # ── Ozellik Detaylari ─────────────────────────────────────────
+
+  - type: textarea
+    id: ozet
+    attributes:
+      label: "Ozellik Ozeti / Feature Summary"
+      description: "Istediginiz ozelligi tek paragrafta ozetleyin."
+      placeholder: |
+        Ornek: "Windows Update cache dosyalarini tespit edip toplu silme modulu eklensin."
+        Example: "Add a module that detects and batch-cleans Windows Update cache files."
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Hangi Sorunu Cozuyor? / What Problem Does It Solve?"
+      description: "Bu ozellik olmadan neyi yapamiyorsunuz veya neyi zor yapiyorsunuz?"
+      placeholder: |
+        Ornek: "Windows Update her guncellemeden sonra GB'larca cache birakiryor,
+        bunu manuel bulmak ve silmek zahmetli."
+    validations:
+      required: true
+
+  - type: textarea
+    id: kazanc
+    attributes:
+      label: "Beklenen Kazanc / Expected Benefit"
+      description: "Bu ozellik ne kadar disk/RAM/performans kazanci saglayabilir?"
+      placeholder: |
+        Ornek: "Ortalama bir sistemde 2-5 GB disk alani kazanci."
+        Example: "Expected 2-5 GB disk space savings on average system."
+
+  - type: textarea
+    id: alternatif
+    attributes:
+      label: "Alternatifler / Alternatives Considered"
+      description: "Su an bu isi baska bir yolla yapiyor musunuz? Baska araclar denediniz mi?"
+      placeholder: |
+        Ornek: "Disk Cleanup aracini kullaniyorum ama sadece bazi konumlari temizliyor."
+        Example: "I currently use Disk Cleanup but it only covers a few locations."
+
+  # ── Teknik Detaylar ───────────────────────────────────────────
+
+  - type: dropdown
+    id: karmasiklik
+    attributes:
+      label: "Tahmini Karmasiklik / Estimated Complexity"
+      description: "Bu ozelligin ne kadar karmasik olacagini tahmin ediyorsunuz?"
+      options:
+        - "Basit — Mevcut bir module kucuk ekleme (Simple — small addition to existing module)"
+        - "Orta — Yeni bir modul gerektirir (Medium — requires a new module)"
+        - "Karmasik — Birden fazla modul + GUI degisikligi (Complex — multiple modules + GUI changes)"
+        - "Bilmiyorum / Not sure"
+
+  - type: textarea
+    id: ek-bilgi
+    attributes:
+      label: "Ek Bilgi / Additional Context"
+      description: "Referans linkler, ekran goruntuleri, mockup'lar veya baska aciklamalar."
+      placeholder: |
+        - Referans: https://...
+        - Ekran goruntusu: (surukle birak)
+        - Bu ozellik sundan esinlendi: ...
+
+  # ── Dogrulama ─────────────────────────────────────────────────
+
+  - type: checkboxes
+    id: dogrulama
+    attributes:
+      label: "Kontrol Listesi / Checklist"
+      options:
+        - label: "Bu ozellik daha once istenmemis / I searched for existing feature requests"
+          required: true
+        - label: "Bu istek SistemBakim'in kapsamina uygun / This fits SistemBakim's scope"
+          required: true

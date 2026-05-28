@@ -128,6 +128,17 @@ $global:UpdateJob = Start-Job -ScriptBlock {
 
 #region ── YARDIMCI FONKSİYONLAR ────────────────────────────
 
+# GUI modunda Read-Host cagrilari sureci kilitler (gomulu terminal input alamaz).
+# Bu wrapper menu secimlerinde '1' (varsayilan eylem) dondurur.
+# '1' degerı E/H kontrollerinde [Ee] ile eslesmedigi icin tehlikeli islemler GUVENLE atlanir.
+if ($env:SISTEMBAK_GUI -eq '1') {
+    function Read-Host {
+        param([Parameter(Position=0)][string]$Prompt)
+        Write-Host "[GUI Otomatik]" -ForegroundColor DarkGray
+        return '1'
+    }
+}
+
 function Yaz {
     param([string]$Metin, [ConsoleColor]$Renk = [ConsoleColor]::White, [switch]$YeniSatir = $true)
     if ($YeniSatir) { Write-Host $Metin -ForegroundColor $Renk }
@@ -163,6 +174,10 @@ function BoyutFormatla {
 
 function Onay {
     param([string]$Soru)
+    if ($env:SISTEMBAK_GUI -eq '1') {
+        Write-Host ("  ? {0} [Otomatik: Evet]" -f $Soru) -ForegroundColor Green
+        return $true
+    }
     Write-Host ("  ? {0} [E/H]: " -f $Soru) -ForegroundColor Yellow -NoNewline
     $c = Read-Host; return ($c -match "^[Ee]$")
 }
@@ -355,6 +370,22 @@ function MenuGoster {
   |                         52  Sag Tik Menu Temizle             |
   |                         53  DNS Benchmark                    |
   +--------------------------------------------------------------+
+  |  FAZ 1 - YENI                                                |
+  |  55  Bos Klasor Bulucu   57  USB Cihaz Gecmisi               |
+  |  56  Dosya Kirpici       58  Hosts Dosyasi Editoru           |
+  |                          59  Zamanlama Gorevi Temizle         |
+  +--------------------------------------------------------------+
+  |  FAZ 2 - GIZLILIK & PERFORMANS                               |
+  |  60  Gizlilik Kalkani    62  Baglam Menusu Yoneticisi        |
+  |  61  Turbo Boost Modu    63  Baslangic Gecikme Yoneticisi    |
+  +--------------------------------------------------------------+
+  |  FAZ 3 - AGIR TOPLAR                                         |
+  |  64  Registry Temizleyici  66  Yazilim Guncelleyici          |
+  |  65  Program Kaldirici     67  Sistem Geri Yukleme Yonetici  |
+  +--------------------------------------------------------------+
+  |  FAZ 4 - PREMIUM                                             |
+  |  68  Hizmet Konfiguratoru  69  Ag Monitoru                   |
+  +--------------------------------------------------------------+
   |   0  Cikis    |  ? = Gecmis    |  Modul adi yaz = Ara        |
   +--------------------------------------------------------------+
 "@ -ForegroundColor DarkCyan
@@ -499,17 +530,25 @@ function KapsamliTemizlik {
         "VS Code Logs"           = "$env:APPDATA\Code\logs"
         "VS Code CrashReports"   = "$env:APPDATA\Code\CrashReports"
     }
-    $i = 0
+    $i = 0; $topAtlanan = 0
     foreach ($k in $hedefler.GetEnumerator()) {
         $i++; IlerlemeGoster $k.Key ([int]($i/$hedefler.Count*100))
         if (-not (Test-Path $k.Value)) { continue }
         $once = (Get-ChildItem $k.Value -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum
-        Get-ChildItem $k.Value -Recurse -Force -ErrorAction SilentlyContinue |
-            Where-Object { -not $_.PSIsContainer } | Remove-Item -Force -ErrorAction SilentlyContinue
+        $dosyalar = Get-ChildItem $k.Value -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { -not $_.PSIsContainer }
+        foreach ($d in $dosyalar) {
+            try {
+                Remove-Item $d.FullName -Force -ErrorAction Stop
+            } catch {
+                $topAtlanan++  # Kilitli veya erisim engelli dosya
+            }
+        }
         $sonra = (Get-ChildItem $k.Value -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum
         $kaz   = [Math]::Max(0, $once - $sonra); $topKazan += $kaz
         if ($kaz -gt 0) { Durum $k.Key (BoyutFormatla $kaz) }
     }
+    if ($topAtlanan -gt 0) { Yaz ("  {0} kilitli/erisim engelli dosya atlandi." -f $topAtlanan) DarkGray }
     Start-Process wsreset.exe -WindowStyle Hidden; Start-Sleep 3
     $icon = "$env:LOCALAPPDATA\IconCache.db"
     if (Test-Path $icon) { attrib -h $icon | Out-Null; Remove-Item $icon -Force -ErrorAction SilentlyContinue }
@@ -673,14 +712,15 @@ function WindowsLogTemizle {
         foreach ($h in $hedefler.GetEnumerator()) {
             if (-not (Test-Path $h.Value)) { continue }
             $item = Get-Item $h.Value -ErrorAction SilentlyContinue
-            $boy  = if ($item.PSIsContainer) { (Get-ChildItem $h.Value -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum } else { $item.Length }
+            $onceBoy = if ($item.PSIsContainer) { (Get-ChildItem $h.Value -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum } else { $item.Length }
             if ($item.PSIsContainer) {
                 Get-ChildItem $h.Value -Recurse -File -ErrorAction SilentlyContinue |
                     Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } |
                     Remove-Item -Force -ErrorAction SilentlyContinue
             } else { Clear-Content $h.Value -ErrorAction SilentlyContinue }
-            $topKazan += $boy
-            Yaz ("  Temizlendi: {0}" -f $h.Key) DarkGray
+            $sonraBoy = if ($item.PSIsContainer) { (Get-ChildItem $h.Value -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum } else { (Get-Item $h.Value -ErrorAction SilentlyContinue).Length }
+            $kaz = [Math]::Max(0, $onceBoy - $sonraBoy); $topKazan += $kaz
+            if ($kaz -gt 0) { Yaz ("  Temizlendi: {0} ({1})" -f $h.Key, (BoyutFormatla $kaz)) DarkGray }
         }
     }
     if (Onay "Tum Windows olay gunlukleri temizlensin mi?") {
@@ -1762,7 +1802,7 @@ function FpsOyunOptimizasyonu {
     Write-Host "   Seffaflik ve Animasyonlar        kapat / ac" -ForegroundColor Gray
     Write-Host "   Timer Resolution                 optimize / varsayilan" -ForegroundColor Gray
     Write-Host "  ---------------------------------------------------------" -ForegroundColor DarkGray
-    if ($OtomatikUygula) {
+    if ($OtomatikUygula -or $env:SISTEMBAK_GUI -eq '1') {
         $sec = "1"
     } elseif ($OtomatikGeriAl) {
         $sec = "2"
@@ -2057,7 +2097,7 @@ function RamOptimizasyonu {
     Durum "  Bos"        $bosStr     Green
     Write-Host ""
 
-    if ($OtomatikUygula) {
+    if ($OtomatikUygula -or $env:SISTEMBAK_GUI -eq '1') {
         $sec = "3"
     } else {
         Write-Host "  [1]  Calisma Kumu Temizle   (sureclerin gereksiz bellegi bosaltilir)" -ForegroundColor Green
@@ -2199,7 +2239,7 @@ function SurecTemizleyici {
     }
 
     Write-Host ""
-    if ($OtomatikUygula) {
+    if ($OtomatikUygula -or $env:SISTEMBAK_GUI -eq '1') {
         $secim = "hepsi"
     } else {
         Write-Host "  [T]  Tamamini kapat    [S]  Sectiklerimi kapat    [0]  Cik" -ForegroundColor DarkGray
@@ -2345,13 +2385,17 @@ function BloatwareKaldirici {
     Write-Host ""
     Write-Host "  Renk: Magenta=Xbox  DarkCyan=MS Servis  Yellow=Eglence  Gray=Diger" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "  [T]  Tamamini kaldir" -ForegroundColor Red
-    Write-Host "  [S]  Secip kaldir  (ornek: 1,3,5)" -ForegroundColor Yellow
-    Write-Host "  [0]  Geri" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
-    $secim = (Read-Host).Trim()
-    if ($secim -eq "0") { return }
+    if ($env:SISTEMBAK_GUI -eq '1') {
+        $secim = "T"
+    } else {
+        Write-Host "  [T]  Tamamini kaldir" -ForegroundColor Red
+        Write-Host "  [S]  Secip kaldir  (ornek: 1,3,5)" -ForegroundColor Yellow
+        Write-Host "  [0]  Geri" -ForegroundColor DarkGray
+        Write-Host ""
+        Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
+        $secim = (Read-Host).Trim()
+        if ($secim -eq "0") { return }
+    }
 
     $kaldirilacaklar = @()
     if ($secim -match "^[Tt]$") {
@@ -2584,17 +2628,21 @@ function WinSxSTemizle {
     $s = Read-Host
     switch ($s.Trim()) {
         "1" {
-            Yaz "  Standart DISM temizligi calistiriliyor..." Cyan
-            & dism /online /Cleanup-Image /StartComponentCleanup 2>&1 | Out-Null
-            Yaz "  Tamamlandi!" Green
+            Yaz "  Standart DISM temizligi calistiriliyor (5-15 dk surebilir)..." Cyan
+            $dismSonuc = & dism /online /Cleanup-Image /StartComponentCleanup 2>&1
+            $dismSonuc | ForEach-Object { Write-Host ("    {0}" -f $_) -ForegroundColor DarkGray }
+            if ($LASTEXITCODE -eq 0) { Yaz "  Tamamlandi!" Green }
+            else { Yaz ("  DISM cikis kodu: {0}" -f $LASTEXITCODE) Yellow }
         }
         "2" {
             Write-Host "  UYARI: Bu islem GERI ALINAMAZ! Emin misiniz? (E/H): " -ForegroundColor Red -NoNewline
             $onay = Read-Host
             if ($onay -match "^[Ee]") {
-                Yaz "  Derin temizlik calistiriliyor (bekleniyor)..." Red
-                & dism /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 | Out-Null
-                Yaz "  Tamamlandi!" Green
+                Yaz "  Derin temizlik calistiriliyor (10-30 dk surebilir)..." Red
+                $dismSonuc = & dism /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1
+                $dismSonuc | ForEach-Object { Write-Host ("    {0}" -f $_) -ForegroundColor DarkGray }
+                if ($LASTEXITCODE -eq 0) { Yaz "  Tamamlandi!" Green }
+                else { Yaz ("  DISM cikis kodu: {0}" -f $LASTEXITCODE) Yellow }
             } else {
                 Yaz "  Iptal edildi." Yellow
             }
@@ -3004,13 +3052,17 @@ function FormatSonrasiSihirbaz {
     Write-Host ""
     Write-Host "  Tahmini sure: 5-10 dakika" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  [T]  TAMAMINI UYGULA (onerilen)" -ForegroundColor Green
-    Write-Host "  [S]  Secmeli uygula (numaralar gir: 1,3,5)" -ForegroundColor Yellow
-    Write-Host "  [0]  Geri" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
-    $sec = (Read-Host).Trim()
-    if ($sec -eq "0") { return }
+    if ($env:SISTEMBAK_GUI -eq '1') {
+        $sec = "T"
+    } else {
+        Write-Host "  [T]  TAMAMINI UYGULA (onerilen)" -ForegroundColor Green
+        Write-Host "  [S]  Secmeli uygula (numaralar gir: 1,3,5)" -ForegroundColor Yellow
+        Write-Host "  [0]  Geri" -ForegroundColor DarkGray
+        Write-Host ""
+        Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
+        $sec = (Read-Host).Trim()
+        if ($sec -eq "0") { return }
+    }
 
     $adimlar = @(1,2,3,4,5,6,7,8,9,10,11)
     if ($sec -notmatch "^[Tt]$") {
@@ -3256,6 +3308,7 @@ function WindowsPerformansTweaks {
         return
     }
 
+    if ($env:SISTEMBAK_GUI -eq '1' -and -not $OtomatikGeriAl) { $OtomatikUygula = $true }
     if (-not $OtomatikUygula -and -not $OtomatikGeriAl) {
         Write-Host ""
         Write-Host "  Bu modul Windows'un gizli performans ayarlarini optimize eder:" -ForegroundColor Cyan
@@ -6530,6 +6583,2186 @@ function DNSBenchmark {
     RaporVeriEkle "dns_benchmark" @{ EnIyi=$enIyi.Ad; OrtMs=$enIyi.OrtMs; IP=$enIyi.IP; TestSayi=$sonuclar.Count }
 }
 
+function WiFiCihazTarama {
+    Baslik "MODUL 54 - WiFi Ag Taramasi"
+
+    # 1. WiFi baglanti bilgileri
+    Yaz "  [1/3] WiFi baglanti bilgileri aliniyor..." Cyan
+    $wifiRaw = netsh wlan show interfaces 2>$null
+    $wifiBagli = $false
+    if ($wifiRaw) {
+        $ssid = ""; $sinyal = ""; $guvenlik = ""; $bant = ""; $kanal = ""; $hiz = ""
+        foreach ($line in $wifiRaw) {
+            if ($line -match '^\s+SSID\s*:\s*(.+)' -and -not $line.Contains("BSSID")) { $ssid = $Matches[1].Trim() }
+            if ($line -match 'Signal\s*:\s*(.+)') { $sinyal = $Matches[1].Trim() }
+            if ($line -match 'Authentication\s*:\s*(.+)') { $guvenlik = $Matches[1].Trim() }
+            if ($line -match 'Band\s*:\s*(.+)') { $bant = $Matches[1].Trim() }
+            if ($line -match 'Channel\s*:\s*(.+)') { $kanal = $Matches[1].Trim() }
+            if ($line -match 'Receive rate\s*:\s*(.+)') { $hiz = $Matches[1].Trim() }
+        }
+        if ($ssid) {
+            $wifiBagli = $true
+            Yaz ("  Ag Adi (SSID)    : " + $ssid) White
+            if ($sinyal) {
+                $sinyalRenk = if ([int]($sinyal -replace '%','') -ge 70) { "Green" } elseif ([int]($sinyal -replace '%','') -ge 40) { "Yellow" } else { "Red" }
+                Yaz ("  Sinyal Gucu      : " + $sinyal) $sinyalRenk
+            }
+            if ($guvenlik) { Yaz ("  Guvenlik         : " + $guvenlik) White }
+            if ($bant)     { Yaz ("  Frekans Bandi    : " + $bant) White }
+            if ($kanal)    { Yaz ("  Kanal            : " + $kanal) White }
+            if ($hiz)      { Yaz ("  Baglanti Hizi    : " + $hiz) White }
+        } else {
+            Yaz "  WiFi'ye bagli degil veya Ethernet kullaniliyor." Yellow
+        }
+    } else {
+        Yaz "  WiFi adaptoru bulunamadi." Yellow
+    }
+
+    # 2. Yerel ag bilgileri
+    Write-Host ""
+    Yaz "  [2/3] Yerel ag bilgileri..." Cyan
+    $agYapilandirma = Get-NetIPConfiguration -ErrorAction SilentlyContinue | Where-Object { $_.IPv4DefaultGateway } | Select-Object -First 1
+    if (-not $agYapilandirma) {
+        Yaz "  Aktif ag baglantisi bulunamadi!" Red
+        return
+    }
+    $benimIP   = $agYapilandirma.IPv4Address.IPAddress
+    $agGecidi  = $agYapilandirma.IPv4DefaultGateway.NextHop
+    $adaptorAd = $agYapilandirma.InterfaceAlias
+    Yaz ("  Adaptor          : " + $adaptorAd) White
+    Yaz ("  IP Adresiniz     : " + $benimIP) Green
+    Yaz ("  Ag Gecidi/Modem  : " + $agGecidi) Cyan
+
+    $parcalar = $benimIP.Split('.')
+    $altAg    = $parcalar[0] + "." + $parcalar[1] + "." + $parcalar[2]
+
+    # 3. Ag taramasi
+    Write-Host ""
+    Yaz "  [3/3] Agdaki cihazlar taraniyor..." Cyan
+    Yaz "  Hizli tarama baslatildi (10-20 saniye)..." Yellow
+
+    # Paralel ping ile ARP tablosunu doldur
+    $pingScript = {
+        param([string]$hedef)
+        try {
+            $p = New-Object System.Net.NetworkInformation.Ping
+            $p.Send($hedef, 800) | Out-Null
+            $p.Dispose()
+        } catch {}
+    }
+
+    $havuz = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspacePool(1, 64)
+    $havuz.Open()
+    $isler = [System.Collections.ArrayList]::new()
+
+    for ($i = 1; $i -le 254; $i++) {
+        $hedefIP = "$altAg.$i"
+        $ps = [PowerShell]::Create().AddScript($pingScript).AddArgument($hedefIP)
+        $ps.RunspacePool = $havuz
+        [void]$isler.Add(@{ PS = $ps; Sonuc = $ps.BeginInvoke() })
+    }
+
+    # Bekle (max 15 sn)
+    $bitis = (Get-Date).AddSeconds(15)
+    while (($isler | Where-Object { -not $_.Sonuc.IsCompleted }).Count -gt 0) {
+        if ((Get-Date) -gt $bitis) { break }
+        Start-Sleep -Milliseconds 300
+    }
+    foreach ($is in $isler) {
+        try { if ($is.Sonuc.IsCompleted) { $is.PS.EndInvoke($is.Sonuc) | Out-Null } } catch {}
+        $is.PS.Dispose()
+    }
+    $havuz.Close(); $havuz.Dispose()
+
+    # ARP tablosunu oku
+    $arpSatirlar = arp -a
+    $cihazlar = [System.Collections.ArrayList]::new()
+
+    foreach ($satir in $arpSatirlar) {
+        if ($satir -match '^\s+(\d+\.\d+\.\d+\.\d+)\s+([\w-]{17})\s+(\w+)') {
+            $cIP   = $Matches[1]
+            $cMAC  = $Matches[2].ToUpper()
+            $cTur  = $Matches[3]
+
+            if ($cMAC -eq 'FF-FF-FF-FF-FF-FF') { continue }
+            if ($cIP -notmatch ("^" + [regex]::Escape($altAg) + "\.")) { continue }
+
+            [void]$cihazlar.Add(@{ IP = $cIP; MAC = $cMAC; Tur = $cTur })
+        }
+    }
+
+    # Sirala
+    $cihazlar = $cihazlar | Sort-Object { $ipParts = $_.IP.Split('.'); [int]$ipParts[3] }
+
+    # Uretici veritabani (MAC ilk 3 byte)
+    function MACUretici([string]$mac) {
+        $on6 = ($mac -replace '-','').Substring(0,6).ToUpper()
+        $db = @{
+            "Apple"    = "DC71C5|A4B197|3C06A7|AC1F74|F0B479|78CA39|B8E856|D4619D|4C57CA|F0D1A9|A860B6|14BD61|F8FF"
+            "Samsung"  = "00224D|A4C494|28395E|F8D0BD|9C3A0A|C45006|BC7280|E4FAED|842E27|8C7712|CCB11A|78D6F0"
+            "Xiaomi"   = "8C1645|7C1DD9|78110B|286C07|50EC50|640980|F4F5DB|9C9D7E|28E31F|64CC2E|2C3361"
+            "Intel"    = "D0D2B0|1C6F65|803F5D|F81654|181DEA|FC3497|7C5CF8|8086F2|A4BB6D|48A472|3497F6"
+            "Realtek"  = "00E04C|52540|808643|00E04C|B04E26"
+            "TP-Link"  = "B0BE76|EC086B|503EAA|14CC20|A42BB0|6466B3|D46E0E|C4E984|F8D111|60A4B7|B09575|5C628B"
+            "Huawei"   = "9C2A70|004E01|E0CB4E|5C7D5E|C8D15E|48DB50|8018A7|7C6097"
+            "ASUS"     = "3C7C3F|2C4D54|B06EBF|049226|1CBFCE|708BCD|D850E6"
+            "D-Link"   = "B4FBE4|001E58|001CF0|7054D2|1CAFF7|28107B"
+            "Netgear"  = "001F1F|C03F0E|6CB0CE|A021B7|B07FB9|A42B8C"
+            "LG"       = "38F9D3|001E75|CC2D8C|10F96F|A8E544"
+            "Monster"  = "60458A|288023"
+            "Google"   = "FC4596|D89695|B047BF|3C5AB4|F4F5E8"
+            "Oppo"     = "5CE91E|887F03|A44519"
+            "Lenovo"   = "28D244|E8F724|50EBF6|F0038C|8CEC4B"
+            "HP"       = "10604B|94577A|B499BA|F860F0|2C768A"
+            "Dell"     = "F8DB88|B8CA3A|001A4D|34E6D7|509A4C"
+            "MSI"      = "00D861|4CEB42|0017F2"
+        }
+        foreach ($marka in $db.Keys) {
+            foreach ($pre in $db[$marka].Split('|')) {
+                if ($on6.StartsWith($pre)) { return $marka }
+            }
+        }
+        return "Bilinmiyor"
+    }
+
+    # Sonuclari goster
+    Write-Host ""
+    Write-Host ("  {0,-4} {1,-16} {2,-20} {3,-10} {4,-14} {5}" -f "#", "IP Adresi", "MAC Adresi", "Durum", "Uretici", "Aciklama") -ForegroundColor Cyan
+    Write-Host ("  " + ("-" * 78)) -ForegroundColor DarkGray
+
+    $sayac = 0
+    foreach ($c in $cihazlar) {
+        $sayac++
+        $uretici = MACUretici $c.MAC
+        $durum   = if ($c.Tur -eq 'dynamic') { "Aktif" } else { "Sabit" }
+
+        $aciklama = ""
+        $renk     = "White"
+        if ($c.IP -eq $benimIP)  { $aciklama = ">> BU PC";      $renk = "Green" }
+        elseif ($c.IP -eq $agGecidi) { $aciklama = ">> MODEM"; $renk = "Cyan" }
+
+        Write-Host ("  {0,-4} {1,-16} {2,-20} {3,-10} {4,-14} {5}" -f $sayac, $c.IP, $c.MAC, $durum, $uretici, $aciklama) -ForegroundColor $renk
+    }
+
+    Write-Host ("  " + ("-" * 78)) -ForegroundColor DarkGray
+    Write-Host ""
+    $digerCihaz = $sayac - 2
+    if ($digerCihaz -lt 0) { $digerCihaz = 0 }
+    Yaz ("  Toplam " + $sayac + " cihaz bulundu (sizin disinda " + $digerCihaz + " cihaz bagli)") Green
+
+    if ($digerCihaz -gt 10) {
+        Write-Host ""
+        Yaz "  UYARI: Agda cok fazla cihaz tespit edildi!" Yellow
+        Yaz "  Tanimadiginiz cihazlar varsa:" Yellow
+        Yaz ("    - Modem yonetim panelini acin (tarayicida " + $agGecidi + ")") White
+        Yaz "    - WiFi sifrenizi degistirin" White
+        Yaz "    - MAC filtreleme aktif edin" White
+    }
+
+    if ($wifiBagli -and $guvenlik -and $guvenlik -notmatch 'WPA3|WPA2') {
+        Write-Host ""
+        Yaz "  GUVENLIK: WiFi guvenlik protokolunuz eski!" Red
+        Yaz ("  Mevcut: " + $guvenlik + " | Onerilen: WPA2 veya WPA3") Yellow
+    }
+
+    Add-Content $LOG_DOSYA ("  WiFi Tarama: " + $sayac + " cihaz bulundu, SSID=" + $ssid)
+}
+
+#endregion
+
+#region ── MODUL 55: BOS KLASOR BULUCU ──────────────────────
+
+function BosKlasorBulucu {
+    Baslik "Bos Klasor Bulucu" "55"
+
+    $taramaYollari = @(
+        $env:USERPROFILE
+        "C:\Temp"
+        "C:\Users\Public"
+        (Join-Path $env:LOCALAPPDATA "Temp")
+        (Join-Path $env:APPDATA "")
+    )
+
+    # Korunacak klasorler (sistem/gizli/kritik)
+    $korunanlar = @(
+        "$env:USERPROFILE\.ssh"
+        "$env:USERPROFILE\.gnupg"
+        "$env:APPDATA\Microsoft"
+        "$env:LOCALAPPDATA\Microsoft"
+        "C:\Windows"
+        "C:\Program Files"
+        "C:\Program Files (x86)"
+        "$env:USERPROFILE\AppData\Local\Packages"
+    )
+
+    Yaz "  Tarama baslatiliyor..." Cyan
+    $boslar = [System.Collections.Generic.List[string]]::new()
+    $taranan = 0
+
+    foreach ($kok in $taramaYollari) {
+        if (-not (Test-Path $kok)) { continue }
+        $klasorler = Get-ChildItem -Path $kok -Directory -Recurse -Force -ErrorAction SilentlyContinue
+        foreach ($k in $klasorler) {
+            $taranan++
+            # Korunan yol kontrolu
+            $korumali = $false
+            foreach ($ky in $korunanlar) {
+                $genisKY = [Environment]::ExpandEnvironmentVariables($ky)
+                if ($k.FullName -like "$genisKY*") { $korumali = $true; break }
+            }
+            if ($korumali) { continue }
+
+            # Bos mu? (dosya ve alt klasor yok)
+            $icerik = Get-ChildItem -Path $k.FullName -Force -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $icerik) {
+                $boslar.Add($k.FullName)
+            }
+        }
+    }
+
+    Durum "Taranan klasor" $taranan.ToString() Cyan
+    Durum "Bos klasor" $boslar.Count.ToString() Yellow
+
+    if ($boslar.Count -eq 0) {
+        Yaz "  Bos klasor bulunamadi. Temiz!" Green
+        return
+    }
+
+    Write-Host ""
+    $gosterilenMax = [Math]::Min($boslar.Count, 30)
+    for ($i = 0; $i -lt $gosterilenMax; $i++) {
+        $goreceli = $boslar[$i].Replace($env:USERPROFILE, "~")
+        Write-Host ("    [{0,3}]  {1}" -f ($i+1), $goreceli) -ForegroundColor DarkGray
+    }
+    if ($boslar.Count -gt 30) {
+        Yaz ("  ... ve {0} klasor daha" -f ($boslar.Count - 30)) DarkGray
+    }
+
+    Write-Host ""
+    if (Onay ("{0} bos klasor silinsin mi?" -f $boslar.Count)) {
+        $silinen = 0
+        foreach ($yol in $boslar) {
+            try {
+                Remove-Item -Path $yol -Force -ErrorAction Stop
+                $silinen++
+            } catch { }
+        }
+        Yaz ("  {0}/{1} bos klasor silindi." -f $silinen, $boslar.Count) Green
+    }
+}
+
+#endregion
+
+#region ── MODUL 56: DOSYA KIRPICI (SHREDDER) ───────────────
+
+function DosyaKirpici {
+    Baslik "Guvenli Dosya Kirpici (Shredder)" "56"
+
+    Yaz "  Bu modul dosyalari kurtarilamaz sekilde imha eder." Yellow
+    Yaz "  Yontem: 3 gecis (rastgele + sifir + rastgele) + sil" Gray
+    Write-Host ""
+
+    if ($env:SISTEMBAK_GUI -eq '1') {
+        Yaz "  GUI modunda: Dosya yolunu log penceresinden okuyun." Cyan
+        Yaz "  CLI'dan kullanmak icin konsol surumunu tercih edin." Gray
+        return
+    }
+
+    Write-Host "  Kirpilacak dosya/klasor yolu: " -ForegroundColor Yellow -NoNewline
+    $hedefYol = (Read-Host).Trim().Trim('"')
+
+    if (-not (Test-Path $hedefYol)) {
+        Yaz "  HATA: Belirtilen yol bulunamadi!" Red
+        return
+    }
+
+    # Dosya listesi olustur
+    $dosyalar = if ((Get-Item $hedefYol).PSIsContainer) {
+        Get-ChildItem -Path $hedefYol -File -Recurse -Force -ErrorAction SilentlyContinue
+    } else {
+        @(Get-Item $hedefYol)
+    }
+
+    if ($dosyalar.Count -eq 0) {
+        Yaz "  Kirpilacak dosya bulunamadi." Yellow
+        return
+    }
+
+    $topBoyut = ($dosyalar | Measure-Object Length -Sum).Sum
+    Durum "Dosya sayisi" $dosyalar.Count.ToString() Yellow
+    Durum "Toplam boyut" (BoyutFormatla $topBoyut) Yellow
+
+    if (-not (Onay "Bu dosyalar KALICI olarak imha edilecek. Emin misiniz?")) { return }
+
+    $rng = [System.Security.Cryptography.RNGCryptoServiceProvider]::new()
+    $tampon = New-Object byte[] 65536  # 64KB tampon
+
+    $sayac = 0
+    foreach ($dosya in $dosyalar) {
+        try {
+            $boyut = $dosya.Length
+            if ($boyut -eq 0) { Remove-Item $dosya.FullName -Force; $sayac++; continue }
+
+            $fs = [System.IO.File]::Open($dosya.FullName, 'Open', 'Write')
+            # 3 gecis overwrite
+            for ($gecis = 0; $gecis -lt 3; $gecis++) {
+                $fs.Position = 0
+                $kalan = $boyut
+                while ($kalan -gt 0) {
+                    $yazilacak = [Math]::Min($kalan, $tampon.Length)
+                    if ($gecis -eq 1) {
+                        [Array]::Clear($tampon, 0, $yazilacak)  # Gecis 2: sifirlar
+                    } else {
+                        $rng.GetBytes($tampon)  # Gecis 1,3: rastgele
+                    }
+                    $fs.Write($tampon, 0, $yazilacak)
+                    $kalan -= $yazilacak
+                }
+                $fs.Flush()
+            }
+            $fs.Close()
+
+            # Dosya adini rastgele yeniden adlandir, sonra sil
+            $rastgeleAd = Join-Path $dosya.DirectoryName ([System.IO.Path]::GetRandomFileName())
+            [System.IO.File]::Move($dosya.FullName, $rastgeleAd)
+            [System.IO.File]::Delete($rastgeleAd)
+            $sayac++
+        } catch {
+            Yaz ("  Atlandi: " + $dosya.Name + " (" + $_.Exception.Message + ")") DarkGray
+        }
+    }
+
+    $rng.Dispose()
+
+    # Eger klasorse, bos kalan klasorleri de sil
+    if ((Get-Item $hedefYol -ErrorAction SilentlyContinue).PSIsContainer) {
+        Get-ChildItem $hedefYol -Directory -Recurse -Force -ErrorAction SilentlyContinue |
+            Sort-Object { $_.FullName.Length } -Descending |
+            ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
+        Remove-Item $hedefYol -Force -ErrorAction SilentlyContinue
+    }
+
+    Yaz ("  {0}/{1} dosya guvenli sekilde imha edildi." -f $sayac, $dosyalar.Count) Green
+}
+
+#endregion
+
+#region ── MODUL 57: USB CIHAZ GECMISI ──────────────────────
+
+function USBCihazGecmisi {
+    Baslik "USB Cihaz Gecmisi" "57"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    $regYol = "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR"
+    if (-not (Test-Path $regYol)) {
+        Yaz "  USB kayit defteri yolu bulunamadi." Yellow
+        return
+    }
+
+    $cihazlar = [System.Collections.Generic.List[PSCustomObject]]::new()
+    $altAnahtarlar = Get-ChildItem -Path $regYol -ErrorAction SilentlyContinue
+
+    foreach ($anahtar in $altAnahtarlar) {
+        $seriNoAnahtarlari = Get-ChildItem -Path $anahtar.PSPath -ErrorAction SilentlyContinue
+        foreach ($seri in $seriNoAnahtarlari) {
+            $props = Get-ItemProperty -Path $seri.PSPath -ErrorAction SilentlyContinue
+            $dostu = if ($props.FriendlyName) { $props.FriendlyName } else { $anahtar.PSChildName }
+            $sinif = if ($props.Class) { $props.Class } else { "Bilinmiyor" }
+
+            # Son baglanti zamani (varsa)
+            $sonBaglanti = $null
+            try {
+                $logYol = "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\$($anahtar.PSChildName)\$($seri.PSChildName)\Properties\{83da6326-97a6-4088-9453-a1923f573b29}\0066"
+                if (Test-Path $logYol) {
+                    $veri = (Get-ItemProperty $logYol -ErrorAction SilentlyContinue).'(default)'
+                    if ($veri -is [byte[]]) {
+                        $ft = [BitConverter]::ToInt64($veri, 0)
+                        $sonBaglanti = [DateTime]::FromFileTime($ft)
+                    }
+                }
+            } catch {}
+
+            $cihazlar.Add([PSCustomObject]@{
+                Ad         = $dostu
+                Sinif      = $sinif
+                SeriNo     = $seri.PSChildName
+                SonBaglanti = $sonBaglanti
+            })
+        }
+    }
+
+    if ($cihazlar.Count -eq 0) {
+        Yaz "  Kayitli USB cihaz bulunamadi." Green
+        return
+    }
+
+    Durum "Kayitli USB cihaz" $cihazlar.Count.ToString() Yellow
+    Write-Host ""
+
+    foreach ($c in $cihazlar) {
+        $zamanStr = if ($c.SonBaglanti) { $c.SonBaglanti.ToString("dd.MM.yyyy HH:mm") } else { "?" }
+        $ad = $c.Ad
+        if ($ad.Length -gt 40) { $ad = $ad.Substring(0, 37) + "..." }
+        Write-Host ("    {0,-40}  {1,-12}  {2}" -f $ad, $zamanStr, $c.SeriNo.Substring(0, [Math]::Min(16, $c.SeriNo.Length))) -ForegroundColor Gray
+    }
+
+    Write-Host ""
+    if (Onay "USB cihaz gecmisi temizlensin mi? (registry kayitlari silinir)") {
+        $silinen = 0
+        foreach ($anahtar in $altAnahtarlar) {
+            try {
+                Remove-Item -Path $anahtar.PSPath -Recurse -Force -ErrorAction Stop
+                $silinen++
+            } catch {
+                Yaz ("  Silinemedi: " + $anahtar.PSChildName) DarkGray
+            }
+        }
+        # SetupAPI logunu da temizle
+        $setupLog = "C:\Windows\INF\setupapi.dev.log"
+        if (Test-Path $setupLog) {
+            try { Clear-Content $setupLog -Force -ErrorAction Stop } catch {}
+        }
+        Yaz ("  {0} USB kaydi temizlendi." -f $silinen) Green
+    }
+}
+
+#endregion
+
+#region ── MODUL 58: HOSTS DOSYASI EDITORU ──────────────────
+
+function HostsDosyasiEditoru {
+    Baslik "Hosts Dosyasi Editoru" "58"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    $hostsYol = "C:\Windows\System32\drivers\etc\hosts"
+    if (-not (Test-Path $hostsYol)) {
+        Yaz "  hosts dosyasi bulunamadi!" Red
+        return
+    }
+
+    $icerik = Get-Content $hostsYol -ErrorAction SilentlyContinue
+    $mevcutSatir = ($icerik | Where-Object { $_ -match '^\s*0\.0\.0\.0\s' -or $_ -match '^\s*127\.0\.0\.1\s' }).Count
+    $topSatir = $icerik.Count
+
+    Durum "hosts dosyasi" $hostsYol Gray
+    Durum "Toplam satir" $topSatir.ToString() Cyan
+    Durum "Aktif engel" $mevcutSatir.ToString() Yellow
+
+    # Hazir reklam/tracker listesi (en yaygin 80 domain)
+    $engelListesi = @(
+        # Reklam aglari
+        "ad.doubleclick.net","adclick.g.doubleclick.net","ads.google.com",
+        "adservice.google.com","pagead2.googlesyndication.com",
+        "googleads.g.doubleclick.net","tpc.googlesyndication.com",
+        "ad.lgappstv.com","ads.yahoo.com","ads.facebook.com",
+        "pixel.facebook.com","an.facebook.com",
+        # Tracker/analitik
+        "analytics.google.com","www.google-analytics.com",
+        "ssl.google-analytics.com","google-analytics.com",
+        "sb.scorecardresearch.com","b.scorecardresearch.com",
+        "pixel.quantserve.com","edge.quantserve.com",
+        "stats.wp.com","pixel.wp.com",
+        # Telemetri (Windows)
+        "vortex.data.microsoft.com","vortex-win.data.microsoft.com",
+        "telecommand.telemetry.microsoft.com",
+        "telecommand.telemetry.microsoft.com.nsatc.net",
+        "oca.telemetry.microsoft.com","sqm.telemetry.microsoft.com",
+        "watson.telemetry.microsoft.com","redir.metaservices.microsoft.com",
+        "settings-sandbox.data.microsoft.com",
+        "watson.live.com","statsfe2.ws.microsoft.com",
+        "corpext.msitadfs.glbdns2.microsoft.com",
+        "compatexchange.cloudapp.net","a-0001.a-msedge.net",
+        # Reklam/malware yayginlar
+        "tracking.opencandy.com.s3.amazonaws.com",
+        "media.opencandy.com","cdn.opencandy.com",
+        "ads.opencandy.com","installer.betterinstaller.com",
+        "ads.yahoo.com","ads.yap.yahoo.com",
+        "adserver.yahoo.com","global.adserver.yahoo.com"
+    )
+
+    Write-Host ""
+    Yaz "  Islemler:" Cyan
+    Yaz "    [1]  Reklam & Tracker Engelle (hazir liste: $($engelListesi.Count) domain)" White
+    Yaz "    [2]  Windows Telemetri Engelle" White
+    Yaz "    [3]  Mevcut engelleri goster" White
+    Yaz "    [4]  Tum SistemBakim engellerini kaldir" White
+    Yaz "    [5]  Geri" White
+    Write-Host ""
+
+    Write-Host "  Seciminiz: " -ForegroundColor Yellow -NoNewline
+    $secim = (Read-Host).Trim()
+
+    switch ($secim) {
+        "1" {
+            # Yedek al
+            $yedek = $hostsYol + ".bak_" + (Get-Date -Format "yyyyMMdd_HHmm")
+            Copy-Item $hostsYol $yedek -Force
+            Yaz ("  Yedek: " + $yedek) DarkGray
+
+            $eklenen = 0
+            $satirlar = [System.Collections.Generic.List[string]]::new()
+            $satirlar.Add("")
+            $satirlar.Add("# ── SistemBakim Reklam & Tracker Engeli ── " + (Get-Date -Format "yyyy-MM-dd"))
+            foreach ($d in $engelListesi) {
+                if ($icerik -notcontains "0.0.0.0 $d") {
+                    $satirlar.Add("0.0.0.0 $d")
+                    $eklenen++
+                }
+            }
+            $satirlar.Add("# ── SistemBakim Engel Sonu ──")
+            Add-Content -Path $hostsYol -Value ($satirlar -join "`r`n") -Encoding UTF8
+            Yaz ("  {0} yeni domain engellendi." -f $eklenen) Green
+
+            # DNS onbellegi temizle
+            ipconfig /flushdns | Out-Null
+            Yaz "  DNS onbellegi temizlendi." Green
+        }
+        "2" {
+            $telemetriDomainler = $engelListesi | Where-Object { $_ -match 'microsoft\.com|msedge\.net' }
+            $yedek = $hostsYol + ".bak_" + (Get-Date -Format "yyyyMMdd_HHmm")
+            Copy-Item $hostsYol $yedek -Force
+            $eklenen = 0
+            $satirlar = @("", "# ── SistemBakim Telemetri Engeli ──")
+            foreach ($d in $telemetriDomainler) {
+                if ($icerik -notcontains "0.0.0.0 $d") {
+                    $satirlar += "0.0.0.0 $d"
+                    $eklenen++
+                }
+            }
+            $satirlar += "# ── SistemBakim Telemetri Sonu ──"
+            Add-Content -Path $hostsYol -Value ($satirlar -join "`r`n") -Encoding UTF8
+            ipconfig /flushdns | Out-Null
+            Yaz ("  {0} telemetri domaini engellendi." -f $eklenen) Green
+        }
+        "3" {
+            $engeller = $icerik | Where-Object { $_ -match '^\s*0\.0\.0\.0\s' }
+            if ($engeller.Count -eq 0) { Yaz "  Aktif engel yok." Gray; return }
+            Yaz ("  {0} aktif engel:" -f $engeller.Count) Cyan
+            $engeller | Select-Object -First 40 | ForEach-Object {
+                Write-Host ("    " + $_) -ForegroundColor DarkGray
+            }
+            if ($engeller.Count -gt 40) { Yaz "  ... ve $($engeller.Count - 40) domain daha" DarkGray }
+        }
+        "4" {
+            $yedek = $hostsYol + ".bak_" + (Get-Date -Format "yyyyMMdd_HHmm")
+            Copy-Item $hostsYol $yedek -Force
+            $temiz = $icerik | Where-Object { $_ -notmatch '# ── SistemBakim' } |
+                     Where-Object { $_ -notmatch '^\s*0\.0\.0\.0\s' -or $_ -match '^\s*0\.0\.0\.0\s+localhost' }
+            Set-Content -Path $hostsYol -Value ($temiz -join "`r`n") -Encoding UTF8
+            ipconfig /flushdns | Out-Null
+            Yaz "  SistemBakim engelleri kaldirildi, yedek alindi." Green
+        }
+        default { return }
+    }
+}
+
+#endregion
+
+#region ── MODUL 59: ZAMANLAMA GOREVI TEMIZLEYICI ───────────
+
+function ZamanlamaGoreviTemizle {
+    Baslik "Zamanlama Gorevi Temizleyici" "59"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    Yaz "  Windows Gorev Zamanlayici taraniyor..." Cyan
+
+    # Bilinen gereksiz/artik gorev desenleri
+    $gereksizDesenler = @(
+        '*Adobe*Update*','*CCleaner*','*GoogleUpdate*','*OneDrive*Standalone*',
+        '*Opera*Autoupdate*','*Brave*Update*','*Dropbox*Update*',
+        '*RealPlayer*','*CyberLink*','*DivX*','*Overwolf*',
+        '*Java*Update*','*Bonjour*','*Apple*Push*','*SoftwareDistribution*',
+        '*npcap*','*Corel*','*WinZip*','*Avast*','*McAfee*Cleanup*'
+    )
+
+    $tumGorevler = Get-ScheduledTask -ErrorAction SilentlyContinue |
+        Where-Object { $_.TaskPath -notmatch '\\Microsoft\\Windows\\' -and $_.TaskPath -notmatch '\\Microsoft\\Office\\' }
+
+    $sorunlular = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    foreach ($gorev in $tumGorevler) {
+        $durum = "Temiz"
+        $neden = ""
+
+        # Kirik gorev: calismasi gereken exe yok
+        $aksiyonlar = $gorev.Actions
+        if ($aksiyonlar) {
+            foreach ($a in $aksiyonlar) {
+                if ($a.Execute -and $a.Execute -notmatch '^\s*$') {
+                    $exeYol = $a.Execute.Trim('"')
+                    if ($exeYol -match '^[A-Z]:\\' -and -not (Test-Path $exeYol)) {
+                        $durum = "Kirik"
+                        $neden = "EXE bulunamadi"
+                    }
+                }
+            }
+        }
+
+        # Gereksiz bilinen gorevler
+        if ($durum -eq "Temiz") {
+            foreach ($desen in $gereksizDesenler) {
+                if ($gorev.TaskName -like $desen) {
+                    $durum = "Gereksiz"
+                    $neden = "Bilinen gereksiz gorev"
+                    break
+                }
+            }
+        }
+
+        # Devre disi ve 90+ gun calistirilmamis
+        if ($durum -eq "Temiz" -and $gorev.State -eq 'Disabled') {
+            $bilgi = $gorev | Get-ScheduledTaskInfo -ErrorAction SilentlyContinue
+            if ($bilgi -and $bilgi.LastRunTime -and $bilgi.LastRunTime -lt (Get-Date).AddDays(-90)) {
+                $durum = "Eski"
+                $neden = "90+ gun devre disi"
+            }
+        }
+
+        if ($durum -ne "Temiz") {
+            $sorunlular.Add([PSCustomObject]@{
+                Ad    = $gorev.TaskName
+                Yol   = $gorev.TaskPath
+                Durum = $durum
+                Neden = $neden
+                State = $gorev.State
+            })
+        }
+    }
+
+    Durum "Taranan gorev" $tumGorevler.Count.ToString() Cyan
+    Durum "Sorunlu gorev" $sorunlular.Count.ToString() Yellow
+
+    if ($sorunlular.Count -eq 0) {
+        Yaz "  Sorunlu gorev bulunamadi. Temiz!" Green
+        return
+    }
+
+    Write-Host ""
+    $renk = @{ "Kirik"="Red"; "Gereksiz"="Yellow"; "Eski"="DarkGray" }
+    foreach ($s in $sorunlular) {
+        $r = $renk[$s.Durum]
+        if (-not $r) { $r = "Gray" }
+        Write-Host ("    [{0,-8}]  {1,-40}  {2}" -f $s.Durum, $s.Ad.Substring(0, [Math]::Min(40, $s.Ad.Length)), $s.Neden) -ForegroundColor $r
+    }
+
+    Write-Host ""
+    if (Onay ("{0} sorunlu gorev temizlensin mi?" -f $sorunlular.Count)) {
+        $silinen = 0
+        foreach ($s in $sorunlular) {
+            try {
+                Unregister-ScheduledTask -TaskName $s.Ad -TaskPath $s.Yol -Confirm:$false -ErrorAction Stop
+                $silinen++
+            } catch {
+                Yaz ("  Atlandi: " + $s.Ad) DarkGray
+            }
+        }
+        Yaz ("  {0}/{1} gorev temizlendi." -f $silinen, $sorunlular.Count) Green
+    }
+}
+
+#endregion
+
+#region ── MODUL 60: GIZLILIK KALKANI (ANTISPY) ─────────────
+
+function GizlilikKalkani {
+    Baslik "Gizlilik Kalkani (AntiSpy)" "60"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    # Win10/Win11 uyumlu gizlilik toggle listesi
+    # Her toggle: Ad, Aciklama, Yol (HKCU veya HKLM), Deger, Tip, AcikDeger, KapaliDeger
+    $toggleler = @(
+        @{ Ad="Reklam Kimligi (Advertising ID)";
+           Yol="HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo"; Anahtar="Enabled"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Konum Servisleri";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="Kamera Erisimi";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="Mikrofon Erisimi";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="Bildirim Erisimi";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userNotificationListener"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="Hesap Bilgisi Erisimi";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="Rehber (Kisiler) Erisimi";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\contacts"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="Takvim Erisimi";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appointments"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="Arama Gecmisi Erisimi";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\phoneCallHistory"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="E-posta Erisimi";
+           Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\email"; Anahtar="Value"; Kapali="Deny"; Acik="Allow"; Tip="String" },
+        @{ Ad="Etkinlik Gecmisi (Timeline)";
+           Yol="HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"; Anahtar="EnableActivityFeed"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Etkinlik Gecmisi Yukleme";
+           Yol="HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"; Anahtar="UploadUserActivities"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Teshis Verileri (Diagnostic Data)";
+           Yol="HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"; Anahtar="AllowTelemetry"; Kapali=0; Acik=3; Tip="DWord" },
+        @{ Ad="Teshis Geri Bildirimi";
+           Yol="HKCU:\Software\Microsoft\Siuf\Rules"; Anahtar="NumberOfSIUFInPeriod"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="El Yazisi ve Yazma Tanilama";
+           Yol="HKCU:\Software\Microsoft\InputPersonalization"; Anahtar="RestrictImplicitInkCollection"; Kapali=1; Acik=0; Tip="DWord" },
+        @{ Ad="Yazma Istatistikleri";
+           Yol="HKCU:\Software\Microsoft\InputPersonalization\TrainedDataStore"; Anahtar="HarvestContacts"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Tailored Experiences (Kisisellestirme)";
+           Yol="HKCU:\Software\Microsoft\Windows\CurrentVersion\Privacy"; Anahtar="TailoredExperiencesWithDiagnosticDataEnabled"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Online Konusma Tanima";
+           Yol="HKCU:\Software\Microsoft\Speech_OneCore\Settings\OnlineSpeechPrivacy"; Anahtar="HasAccepted"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Wi-Fi Sense (Hotspot Paylasimi)";
+           Yol="HKLM:\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config"; Anahtar="AutoConnectAllowedOEM"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="SmartScreen Filtresi (Uygulama)";
+           Yol="HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer"; Anahtar="SmartScreenEnabled"; Kapali="Off"; Acik="Warn"; Tip="String" },
+        @{ Ad="Web Arama Sonuclari (Baslat)";
+           Yol="HKCU:\Software\Policies\Microsoft\Windows\Explorer"; Anahtar="DisableSearchBoxSuggestions"; Kapali=1; Acik=0; Tip="DWord" },
+        @{ Ad="Uygulama Baslatma Takibi";
+           Yol="HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; Anahtar="Start_TrackProgs"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Cihazlar Arasi Deneyim Paylasimi";
+           Yol="HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"; Anahtar="EnableCdp"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Onerilen Icerik (Ayarlar)";
+           Yol="HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"; Anahtar="SubscribedContent-338393Enabled"; Kapali=0; Acik=1; Tip="DWord" },
+        @{ Ad="Kilit Ekrani Spotlight Onerileri";
+           Yol="HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"; Anahtar="SubscribedContent-353696Enabled"; Kapali=0; Acik=1; Tip="DWord" }
+    )
+
+    # Mevcut durumlari oku
+    Write-Host ""
+    Yaz ("  {0} gizlilik ayari taraniyor..." -f $toggleler.Count) Cyan
+    Write-Host ""
+
+    $sonuclar = [System.Collections.Generic.List[PSCustomObject]]::new()
+    $sira = 0
+    foreach ($t in $toggleler) {
+        $sira++
+        $mevcutDeger = $null
+        $durum = "?"
+        try {
+            if (Test-Path $t.Yol) {
+                $mevcutDeger = (Get-ItemProperty -Path $t.Yol -Name $t.Anahtar -ErrorAction SilentlyContinue).($t.Anahtar)
+            }
+        } catch {}
+
+        if ($null -ne $mevcutDeger) {
+            if ($t.Tip -eq "String") {
+                $durum = if ($mevcutDeger -eq $t.Kapali) { "KORUMALI" } else { "ACIK" }
+            } else {
+                $durum = if ([int]$mevcutDeger -eq [int]$t.Kapali) { "KORUMALI" } else { "ACIK" }
+            }
+        } else {
+            $durum = "VARSAYILAN"
+        }
+
+        $renk = switch ($durum) { "KORUMALI" { "Green" } "ACIK" { "Red" } default { "Yellow" } }
+        Write-Host ("  {0,2}. {1,-42} [{2}]" -f $sira, $t.Ad, $durum) -ForegroundColor $renk
+
+        $sonuclar.Add([PSCustomObject]@{ Sira=$sira; Ad=$t.Ad; Durum=$durum; Toggle=$t })
+    }
+
+    $acikSay  = ($sonuclar | Where-Object { $_.Durum -ne "KORUMALI" }).Count
+    $kapaliSay = ($sonuclar | Where-Object { $_.Durum -eq "KORUMALI" }).Count
+
+    Write-Host ""
+    Durum "Korumali (guvenli)" $kapaliSay.ToString() Green
+    Durum "Acik (riskli)" $acikSay.ToString() $(if ($acikSay -gt 10){"Red"} else {"Yellow"})
+    Write-Host ""
+
+    if ($acikSay -eq 0) {
+        Yaz "  Tum gizlilik ayarlari zaten korumali! Temiz." Green
+        return
+    }
+
+    Yaz "  Islemler:" Cyan
+    Yaz "    [1]  Tum acik ayarlari KAPAT (maksimum gizlilik)" White
+    Yaz "    [2]  Tum ayarlari VARSAYILANA dondur (Windows fabrika)" White
+    Yaz "    [0]  Geri" White
+    Write-Host ""
+    Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
+    $secim = if ($env:SISTEMBAK_GUI -eq '1') { "1" } else { (Read-Host).Trim() }
+
+    if ($secim -eq "0") { return }
+    $kapat = ($secim -eq "1")
+
+    $uygulanan = 0
+    foreach ($s in $sonuclar) {
+        $t = $s.Toggle
+        $hedefDeger = if ($kapat) { $t.Kapali } else { $t.Acik }
+        try {
+            if (-not (Test-Path $t.Yol)) { New-Item -Path $t.Yol -Force | Out-Null }
+            if ($t.Tip -eq "String") {
+                Set-ItemProperty -Path $t.Yol -Name $t.Anahtar -Value $hedefDeger -Type String -Force
+            } else {
+                Set-ItemProperty -Path $t.Yol -Name $t.Anahtar -Value $hedefDeger -Type DWord -Force
+            }
+            $uygulanan++
+        } catch {
+            Yaz ("  Atlandi: " + $t.Ad + " (" + $_.Exception.Message + ")") DarkGray
+        }
+    }
+
+    Write-Host ""
+    if ($kapat) {
+        Yaz ("  {0}/{1} gizlilik ayari KORUMA ALTINA alindi!" -f $uygulanan, $toggleler.Count) Green
+    } else {
+        Yaz ("  {0}/{1} gizlilik ayari VARSAYILANA dondu." -f $uygulanan, $toggleler.Count) Yellow
+    }
+    Yaz "  Bazi degisiklikler oturum kapatip acinca aktif olur." DarkGray
+    RaporVeriEkle "gizlilik_kalkani" $(if ($kapat) {"Koruma aktif"} else {"Varsayilan"})
+}
+
+#endregion
+
+#region ── MODUL 61: TURBO BOOST MODU ───────────────────────
+
+function TurboBoostModu {
+    Baslik "Turbo Boost Modu" "61"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    Write-Host ""
+    Yaz "  Turbo Boost: RAM + Surec + Guc + Gorsel = TEK TIK" Cyan
+    Yaz "  Oyun veya agir is oncesi maksimum performans icin." Gray
+    Write-Host ""
+
+    Yaz "  Islemler:" Cyan
+    Yaz "    [1]  TURBO AKTIF (performans modu)" White
+    Yaz "    [2]  TURBO KAPAT (normal moda don)" White
+    Yaz "    [0]  Geri" White
+    Write-Host ""
+    Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
+    $secim = if ($env:SISTEMBAK_GUI -eq '1') { "1" } else { (Read-Host).Trim() }
+    if ($secim -eq "0") { return }
+
+    $turboAktif = ($secim -eq "1")
+    $adim = 0
+
+    # ── 1. RAM Temizligi ──
+    $adim++
+    Write-Host "  -- [$adim/6] RAM Temizligi" -ForegroundColor Cyan
+    if ($turboAktif) {
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
+        # Standby list temizle (varsa EmptyStandbyList.exe yoksa GC yeterli)
+        $ramOnce = [Math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1024, 0)
+        # Working set trim
+        Get-Process | Where-Object { $_.WorkingSet64 -gt 50MB -and $_.ProcessName -notin @("svchost","csrss","wininit","System","smss","lsass","services") } |
+            ForEach-Object { $_.MinWorkingSet = 204800 } 2>$null
+        $ramSonra = [Math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1024, 0)
+        Yaz ("    RAM: {0} MB serbest ({1:+#;-#;0} MB)" -f $ramSonra, ($ramSonra - $ramOnce)) Green
+    } else {
+        Yaz "    RAM normal moda dondu." Gray
+    }
+
+    # ── 2. Gereksiz Surecleri Durdur ──
+    $adim++
+    Write-Host "  -- [$adim/6] Arka Plan Surecleri" -ForegroundColor Cyan
+    $hedefler = @("OneDrive","Teams","Spotify","Discord","Steam","EpicGamesLauncher",
+                  "GoogleCrashHandler*","MicrosoftEdgeUpdate","YourPhone","PhoneExperienceHost",
+                  "SkypeApp","Cortana","GameBar*","BcastDVRUserService","AdobeIPCBroker",
+                  "CCXProcess","CalculatorApp","Microsoft.Photos")
+    if ($turboAktif) {
+        $kapatilan = 0
+        foreach ($h in $hedefler) {
+            $procs = Get-Process -Name $h -ErrorAction SilentlyContinue
+            foreach ($p in $procs) {
+                try { $p | Stop-Process -Force -ErrorAction Stop; $kapatilan++ } catch {}
+            }
+        }
+        Yaz ("    {0} gereksiz surec kapatildi." -f $kapatilan) Green
+    } else {
+        Yaz "    Surecler kullanici tarafindan yeniden baslatilabilir." Gray
+    }
+
+    # ── 3. Guc Plani ──
+    $adim++
+    Write-Host "  -- [$adim/6] Guc Plani" -ForegroundColor Cyan
+    if ($turboAktif) {
+        # Ultimate Performance plani varsa onu sec, yoksa High Performance
+        $ultimate = powercfg /list 2>$null | Select-String "e9a42b02-d5df-448d-aa00-03f14749eb61"
+        if (-not $ultimate) {
+            powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
+            $ultimate = powercfg /list 2>$null | Select-String "e9a42b02-d5df-448d-aa00-03f14749eb61"
+        }
+        if ($ultimate) {
+            powercfg /setactive e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
+            Yaz "    Ultimate Performance plani aktif." Green
+        } else {
+            powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 2>$null
+            Yaz "    High Performance plani aktif." Green
+        }
+    } else {
+        powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e 2>$null
+        Yaz "    Dengeli (Balanced) plana donuldu." Gray
+    }
+
+    # ── 4. Gorsel Efektler ──
+    $adim++
+    Write-Host "  -- [$adim/6] Gorsel Efektler" -ForegroundColor Cyan
+    $transpYol = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+    if (-not (Test-Path $transpYol)) { New-Item -Path $transpYol -Force | Out-Null }
+    Set-ItemProperty -Path $transpYol -Name "EnableTransparency" -Value $(if ($turboAktif) {0} else {1}) -Type DWord -Force
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value $(if ($turboAktif) {"0"} else {"400"}) -Force
+    if ($turboAktif) { Yaz "    Seffaflik ve animasyonlar kapatildi." Green }
+    else { Yaz "    Gorsel efektler geri acildi." Gray }
+
+    # ── 5. Windows Search Indexer ──
+    $adim++
+    Write-Host "  -- [$adim/6] Search Indexer" -ForegroundColor Cyan
+    if ($turboAktif) {
+        Stop-Service -Name "WSearch" -Force -ErrorAction SilentlyContinue
+        Yaz "    Search Indexer durduruldu." Green
+    } else {
+        Start-Service -Name "WSearch" -ErrorAction SilentlyContinue
+        Yaz "    Search Indexer baslatildi." Gray
+    }
+
+    # ── 6. Gereksiz Servisler ──
+    $adim++
+    Write-Host "  -- [$adim/6] Gereksiz Servisler" -ForegroundColor Cyan
+    $turboServisler = @("SysMain","DiagTrack","WMPNetworkSvc","MapsBroker","lfsvc","RetailDemo")
+    $svcSay = 0
+    foreach ($svc in $turboServisler) {
+        $servis = Get-Service -Name $svc -ErrorAction SilentlyContinue
+        if (-not $servis) { continue }
+        if ($turboAktif) {
+            Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
+            $svcSay++
+        } else {
+            Start-Service -Name $svc -ErrorAction SilentlyContinue
+        }
+    }
+    if ($turboAktif) { Yaz ("    {0} gereksiz servis durduruldu." -f $svcSay) Green }
+    else { Yaz "    Servisler geri baslatildi." Gray }
+
+    Write-Host ""
+    if ($turboAktif) {
+        Yaz "  TURBO BOOST AKTIF! Maksimum performans modu." Green
+        Yaz "  Islemleri bitirince [2] ile normal moda donebilirsiniz." DarkGray
+    } else {
+        Yaz "  Normal moda donuldu. Tum ayarlar eski haline getirildi." Yellow
+    }
+    RaporVeriEkle "turbo_boost" $(if ($turboAktif) {"Aktif"} else {"Kapali"})
+}
+
+#endregion
+
+#region ── MODUL 62: BAGLAM MENUSU YONETICISI ───────────────
+
+function BaglamMenusuYonetici {
+    Baslik "Baglam Menusu Yoneticisi (Shell Extension)" "62"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    # HKCR PSDrive
+    if (-not (Test-Path "HKCR:")) {
+        New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT -ErrorAction SilentlyContinue | Out-Null
+    }
+
+    Yaz "  Shell Extension'lar taraniyor..." Cyan
+
+    $shellYollar = @(
+        "HKCR:\*\shellex\ContextMenuHandlers",
+        "HKCR:\Directory\shellex\ContextMenuHandlers",
+        "HKCR:\Directory\Background\shellex\ContextMenuHandlers",
+        "HKCR:\Folder\shellex\ContextMenuHandlers",
+        "HKCR:\Drive\shellex\ContextMenuHandlers"
+    )
+
+    # Windows korunan eklentiler (silmek tehlikeli)
+    $korunanlar = @("CopyAsPathMenu","Sharing","WorkFolders","OpenWith","SendTo","NewMenu",
+                    "Compatibility","PintoStartScreen","OfficeAddin","ShellExtInit","BriefcaseMenu",
+                    "{E2BF9676-5F8F-435C-97EB-11607A5BEDF7}")
+
+    $eklentiler = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    foreach ($yol in $shellYollar) {
+        if (-not (Test-Path $yol)) { continue }
+        Get-ChildItem $yol -ErrorAction SilentlyContinue | ForEach-Object {
+            $ad    = $_.PSChildName
+            $clsid = (Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue)."(Default)"
+            $konum = $yol -replace "HKCR:\\", ""
+
+            # DLL yolunu bul
+            $dllYol = ""
+            if ($clsid -match '^\{.*\}$') {
+                try {
+                    $ip = "HKCR:\CLSID\$clsid\InprocServer32"
+                    if (Test-Path $ip) { $dllYol = (Get-ItemProperty $ip -ErrorAction SilentlyContinue)."(Default)" }
+                } catch {}
+            }
+
+            # Devre disi mi? (ad basinda - varsa)
+            $devreDisi = $ad.StartsWith("-")
+            $temizAd = $ad.TrimStart("-")
+
+            # Korunmus mu?
+            $korunmus = ($korunanlar -contains $temizAd) -or ($temizAd -like "*Windows*") -or ($temizAd -like "*Microsoft*")
+
+            $eklentiler.Add([PSCustomObject]@{
+                Ad=$ad; TemizAd=$temizAd; CLSID=$clsid; DLL=$dllYol; Konum=$konum
+                Yol=$_.PSPath; DevreDisi=$devreDisi; Korunmus=$korunmus
+            })
+        }
+    }
+
+    $ucuncuParti = @($eklentiler | Where-Object { -not $_.Korunmus })
+    $windowsEkl  = @($eklentiler | Where-Object { $_.Korunmus })
+    $devreDisiSay = @($eklentiler | Where-Object { $_.DevreDisi }).Count
+
+    Write-Host ""
+    Durum "Toplam eklenti" $eklentiler.Count.ToString() Cyan
+    Durum "Windows (korunmus)" $windowsEkl.Count.ToString() Gray
+    Durum "3. Parti" $ucuncuParti.Count.ToString() Yellow
+    Durum "Devre disi" $devreDisiSay.ToString() DarkGray
+    Write-Host ""
+
+    if ($ucuncuParti.Count -eq 0) {
+        Yaz "  3. parti shell extension bulunamadi." Green
+        return
+    }
+
+    # 3. parti eklentileri listele
+    Yaz "  3. Parti Eklentiler:" Yellow
+    $sira = 0
+    foreach ($e in $ucuncuParti) {
+        $sira++
+        $durumStr = if ($e.DevreDisi) { "[KAPALI]" } else { "[AKTIF] " }
+        $durumRenk = if ($e.DevreDisi) { "DarkGray" } else { "White" }
+        Write-Host ("    {0,2}. {1}  {2,-36}" -f $sira, $durumStr, $e.TemizAd) -ForegroundColor $durumRenk
+        if ($e.DLL) { Write-Host ("        DLL: {0}" -f $e.DLL) -ForegroundColor DarkGray }
+    }
+
+    Write-Host ""
+    Yaz "  Islemler:" Cyan
+    Yaz "    [1]  Tum 3. parti eklentileri DEVRE DISI birak" White
+    Yaz "    [2]  Tum devre disi birakilan eklentileri GERI AC" White
+    Yaz "    [0]  Geri" White
+    Write-Host ""
+    Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
+    $secim = if ($env:SISTEMBAK_GUI -eq '1') { "1" } else { (Read-Host).Trim() }
+
+    if ($secim -eq "0") { return }
+
+    $islenen = 0
+    foreach ($e in $ucuncuParti) {
+        try {
+            if ($secim -eq "1" -and -not $e.DevreDisi) {
+                # Guvenlı yontem: anahtari "-OrijinalAd" olarak yeniden adlandir
+                $yeniAd = "-" + $e.Ad
+                $ustYol = Split-Path $e.Yol -Parent
+                Rename-Item -Path $e.Yol -NewName $yeniAd -Force -ErrorAction Stop
+                $islenen++
+            }
+            elseif ($secim -eq "2" -and $e.DevreDisi) {
+                # Basi "-" olan anahtari geri ac
+                $yeniAd = $e.Ad.TrimStart("-")
+                Rename-Item -Path $e.Yol -NewName $yeniAd -Force -ErrorAction Stop
+                $islenen++
+            }
+        } catch {
+            Yaz ("  Atlandi: " + $e.TemizAd) DarkGray
+        }
+    }
+
+    Write-Host ""
+    if ($secim -eq "1") {
+        Yaz ("  {0} eklenti devre disi birakildi (guvensiz yol: rename)." -f $islenen) Green
+    } else {
+        Yaz ("  {0} eklenti geri acildi." -f $islenen) Green
+    }
+    Yaz "  Degisikliklerin etkili olmasi icin Explorer'i yeniden baslatin." DarkGray
+    RaporVeriEkle "baglam_menusu" ("{0} eklenti islendi" -f $islenen)
+}
+
+#endregion
+
+#region ── MODUL 63: BASLANGIC GECIKME YONETICISI ───────────
+
+function BaslangicGecikmeYonetici {
+    Baslik "Baslangic Gecikme Yoneticisi" "63"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    Yaz "  Baslangic uygulamalari taranıyor..." Cyan
+
+    # Mevcut startup uygulamalari (Run, RunOnce, Startup klasorleri)
+    $kaynaklar = @(
+        @{ Ad="HKCU Run"; Yol="HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"; Tip="Registry" },
+        @{ Ad="HKLM Run"; Yol="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; Tip="Registry" }
+    )
+
+    $uygulamalar = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    foreach ($kaynak in $kaynaklar) {
+        if (-not (Test-Path $kaynak.Yol)) { continue }
+        $props = Get-ItemProperty -Path $kaynak.Yol -ErrorAction SilentlyContinue
+        $props.PSObject.Properties | Where-Object { $_.Name -notlike "PS*" } | ForEach-Object {
+            $uygulamalar.Add([PSCustomObject]@{
+                Ad       = $_.Name
+                Komut    = $_.Value
+                Kaynak   = $kaynak.Ad
+                RegYol   = $kaynak.Yol
+                Tip      = "Registry"
+            })
+        }
+    }
+
+    # Startup klasoru
+    $startupKlasor = [Environment]::GetFolderPath("Startup")
+    if (Test-Path $startupKlasor) {
+        Get-ChildItem $startupKlasor -File -ErrorAction SilentlyContinue | ForEach-Object {
+            $uygulamalar.Add([PSCustomObject]@{
+                Ad       = $_.BaseName
+                Komut    = $_.FullName
+                Kaynak   = "Startup Klasoru"
+                RegYol   = $startupKlasor
+                Tip      = "Klasor"
+            })
+        }
+    }
+
+    # Mevcut SistemBakim gecikmeli gorevleri kontrol et
+    $mevcutGecikmeler = Get-ScheduledTask -TaskPath "\SistemBakim\" -ErrorAction SilentlyContinue
+
+    Durum "Baslangic uygulamasi" $uygulamalar.Count.ToString() Yellow
+    Durum "Gecikmeli gorev" $(if ($mevcutGecikmeler) { $mevcutGecikmeler.Count } else { 0 }).ToString() Cyan
+    Write-Host ""
+
+    if ($uygulamalar.Count -eq 0) {
+        Yaz "  Baslangic uygulamasi bulunamadi." Green
+        return
+    }
+
+    # Uygulamalari listele
+    $sira = 0
+    foreach ($u in $uygulamalar) {
+        $sira++
+        $gecikmeVar = $false
+        if ($mevcutGecikmeler) {
+            $gecikmeVar = ($mevcutGecikmeler | Where-Object { $_.TaskName -eq ("SB_Delay_" + ($u.Ad -replace '[^\w]','_')) }) -ne $null
+        }
+        $durumStr = if ($gecikmeVar) { "[GECIKMELI]" } else { "[ANLIK]    " }
+        $renk = if ($gecikmeVar) { "Cyan" } else { "White" }
+        Write-Host ("    {0,2}. {1}  {2,-30}  ({3})" -f $sira, $durumStr, $u.Ad, $u.Kaynak) -ForegroundColor $renk
+    }
+
+    Write-Host ""
+    Yaz "  Islemler:" Cyan
+    Yaz "    [1]  Tum uygulamalara 30 sn gecikme uygula" White
+    Yaz "    [2]  Tum uygulamalara 60 sn gecikme uygula" White
+    Yaz "    [3]  Tum gecikmeleri kaldir (normal baslangic)" White
+    Yaz "    [0]  Geri" White
+    Write-Host ""
+    Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
+    $secim = if ($env:SISTEMBAK_GUI -eq '1') { "1" } else { (Read-Host).Trim() }
+
+    if ($secim -eq "0") { return }
+
+    if ($secim -eq "3") {
+        # Tum gecikmeli gorevleri sil
+        $silinen = 0
+        if ($mevcutGecikmeler) {
+            foreach ($g in $mevcutGecikmeler) {
+                Unregister-ScheduledTask -TaskName $g.TaskName -TaskPath "\SistemBakim\" -Confirm:$false -ErrorAction SilentlyContinue
+                $silinen++
+            }
+        }
+        Yaz ("  {0} gecikmeli gorev kaldirildi. Normal baslangica donuldu." -f $silinen) Green
+        return
+    }
+
+    $gecikmeSn = if ($secim -eq "2") { 60 } else { 30 }
+    $islenen = 0
+
+    foreach ($u in $uygulamalar) {
+        $gorevAdi = "SB_Delay_" + ($u.Ad -replace '[^\w]','_')
+
+        try {
+            # Oncelikle mevcut gecikmeli gorevi sil
+            Unregister-ScheduledTask -TaskName $gorevAdi -TaskPath "\SistemBakim\" -Confirm:$false -ErrorAction SilentlyContinue
+
+            # Registry'den kaldir (gecikmeye aliyoruz)
+            if ($u.Tip -eq "Registry") {
+                Remove-ItemProperty -Path $u.RegYol -Name $u.Ad -Force -ErrorAction SilentlyContinue
+            } elseif ($u.Tip -eq "Klasor") {
+                # Klasordeki kisayolu yedekle (silmek yerine gizle)
+                $dosya = Get-Item $u.Komut -ErrorAction SilentlyContinue
+                if ($dosya) { $dosya.Attributes = $dosya.Attributes -bor [System.IO.FileAttributes]::Hidden }
+            }
+
+            # Task Scheduler ile gecikmeli gorev olustur
+            $eylem = New-ScheduledTaskAction -Execute "cmd.exe" -Argument ("/c start """" $($u.Komut)")
+            $tetik = New-ScheduledTaskTrigger -AtLogOn
+            $tetik.Delay = "PT${gecikmeSn}S"
+            $ayar = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+            Register-ScheduledTask -TaskName $gorevAdi -TaskPath "\SistemBakim\" `
+                -Action $eylem -Trigger $tetik -Settings $ayar `
+                -Description ("SistemBakim gecikmeli baslangic: " + $u.Ad) `
+                -RunLevel Highest -Force -ErrorAction Stop | Out-Null
+            $islenen++
+        } catch {
+            Yaz ("  Atlandi: " + $u.Ad + " (" + $_.Exception.Message + ")") DarkGray
+        }
+    }
+
+    Write-Host ""
+    Yaz ("  {0}/{1} uygulama {2}sn gecikmeli baslatilacak." -f $islenen, $uygulamalar.Count, $gecikmeSn) Green
+    Yaz "  Bir sonraki bilgisayar acilisinda etkili olacak." DarkGray
+    RaporVeriEkle "baslangic_gecikme" ("{0} uygulama {1}sn gecikme" -f $islenen, $gecikmeSn)
+}
+
+#endregion
+
+#region ── MODUL 64: REGISTRY TEMIZLEYICI ───────────────────
+
+function RegistryTemizleyici {
+    Baslik "Registry Temizleyici" "64"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    Yaz "  Kayit defteri taraniyor (HKCU + HKLM)..." Cyan
+    Yaz "  Not: Islem oncesi .reg yedegi otomatik olusturulur." DarkGray
+    Write-Host ""
+
+    $sorunlar = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    # ── TARAMA 1: Kirik Uninstall Girisleri ──
+    Write-Host "  [1/4] Kirik Uninstall girisleri..." -ForegroundColor Cyan
+    $uninstYollar = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+    )
+    foreach ($uy in $uninstYollar) {
+        if (-not (Test-Path $uy)) { continue }
+        Get-ChildItem $uy -ErrorAction SilentlyContinue | ForEach-Object {
+            $props = Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue
+            $ad = if ($props.DisplayName) { $props.DisplayName } else { $_.PSChildName }
+            $instYol = $props.InstallLocation
+            $uninstStr = $props.UninstallString
+
+            # Hem install yolu hemde uninstall komutu kirik mi?
+            $kirik = $false
+            if ($instYol -and $instYol.Length -gt 3 -and $instYol -match '^[A-Z]:\\') {
+                if (-not (Test-Path $instYol)) { $kirik = $true }
+            }
+            if (-not $kirik -and $uninstStr) {
+                $exeYol = $uninstStr -replace '"','' -replace '\s+/.*$','' -replace '\s+\-.*$',''
+                if ($exeYol -match '^[A-Z]:\\' -and -not (Test-Path $exeYol)) { $kirik = $true }
+            }
+            # DisplayName bile yoksa artik girdi
+            if (-not $kirik -and -not $props.DisplayName -and -not $uninstStr) { $kirik = $true }
+
+            if ($kirik) {
+                $sorunlar.Add([PSCustomObject]@{
+                    Tip="Kirik Uninstall"; Ad=$ad; Yol=$_.PSPath; Detay="Artik program girisi"
+                })
+            }
+        }
+    }
+
+    # ── TARAMA 2: Gecersiz SharedDLL Referanslari ──
+    Write-Host "  [2/4] Gecersiz SharedDLLs referanslari..." -ForegroundColor Cyan
+    $sharedYol = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\SharedDLLs"
+    if (Test-Path $sharedYol) {
+        $sharedProps = Get-ItemProperty $sharedYol -ErrorAction SilentlyContinue
+        $sharedProps.PSObject.Properties | Where-Object { $_.Name -notlike "PS*" } | ForEach-Object {
+            $dllYol = $_.Name
+            if ($dllYol -match '^[A-Z]:\\' -and -not (Test-Path $dllYol)) {
+                $sorunlar.Add([PSCustomObject]@{
+                    Tip="Gecersiz SharedDLL"; Ad=(Split-Path $dllYol -Leaf); Yol="$sharedYol\$dllYol"; Detay=$dllYol
+                })
+            }
+        }
+    }
+
+    # ── TARAMA 3: Kirik COM/ActiveX Referanslari ──
+    Write-Host "  [3/4] Kirik COM/ActiveX referanslari..." -ForegroundColor Cyan
+    $comYol = "HKLM:\SOFTWARE\Classes\CLSID"
+    if (Test-Path $comYol) {
+        $comSayac = 0
+        Get-ChildItem $comYol -ErrorAction SilentlyContinue | Select-Object -First 2000 | ForEach-Object {
+            $comSayac++
+            $ipYol = Join-Path $_.PSPath "InprocServer32"
+            if (Test-Path $ipYol) {
+                $dll = (Get-ItemProperty $ipYol -ErrorAction SilentlyContinue)."(Default)"
+                if ($dll -and $dll -match '^[A-Z]:\\' -and -not (Test-Path $dll)) {
+                    $sorunlar.Add([PSCustomObject]@{
+                        Tip="Kirik COM"; Ad=$_.PSChildName; Yol=$ipYol; Detay=$dll
+                    })
+                }
+            }
+        }
+    }
+
+    # ── TARAMA 4: Kirik App Paths ──
+    Write-Host "  [4/4] Kirik App Paths girisleri..." -ForegroundColor Cyan
+    $appPathYol = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
+    if (Test-Path $appPathYol) {
+        Get-ChildItem $appPathYol -ErrorAction SilentlyContinue | ForEach-Object {
+            $exeYol = (Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue)."(Default)"
+            if ($exeYol -and $exeYol -match '^[A-Z]:\\' -and -not (Test-Path $exeYol)) {
+                $sorunlar.Add([PSCustomObject]@{
+                    Tip="Kirik App Path"; Ad=$_.PSChildName; Yol=$_.PSPath; Detay=$exeYol
+                })
+            }
+        }
+    }
+
+    # ── SONUC RAPORU ──
+    Write-Host ""
+    Durum "Toplam sorunlu girdi" $sorunlar.Count.ToString() $(if ($sorunlar.Count -gt 0){"Yellow"} else {"Green"})
+    Write-Host ""
+
+    if ($sorunlar.Count -eq 0) {
+        Yaz "  Kayit defteri temiz! Sorunlu girdi bulunamadi." Green
+        return
+    }
+
+    # Tiplere gore gruplama
+    $gruplar = $sorunlar | Group-Object Tip
+    foreach ($g in $gruplar) {
+        Write-Host ("    [{0}] {1} adet" -f $g.Name, $g.Count) -ForegroundColor Yellow
+        $g.Group | Select-Object -First 5 | ForEach-Object {
+            Write-Host ("      - {0}" -f $_.Ad) -ForegroundColor DarkGray
+        }
+        if ($g.Count -gt 5) { Write-Host ("      ... ve {0} daha" -f ($g.Count - 5)) -ForegroundColor DarkGray }
+    }
+
+    Write-Host ""
+    if (-not (Onay ("{0} sorunlu girdi temizlensin mi? (Yedek alinacak)" -f $sorunlar.Count))) { return }
+
+    # ── YEDEK AL (.reg formati) ──
+    $yedekDosya = Join-Path $LOG_KLASOR ("RegistryYedek_{0}.reg" -f (Get-Date -Format "yyyyMMdd_HHmm"))
+    Yaz ("  Yedek olusturuluyor: " + $yedekDosya) DarkGray
+    $regIcerik = [System.Collections.Generic.List[string]]::new()
+    $regIcerik.Add("Windows Registry Editor Version 5.00")
+    $regIcerik.Add("")
+    $regIcerik.Add("; SistemBakim Registry Yedek - " + (Get-Date -Format "yyyy-MM-dd HH:mm:ss"))
+    $regIcerik.Add("; Sorunlu girdi sayisi: " + $sorunlar.Count.ToString())
+    $regIcerik.Add("")
+
+    foreach ($s in $sorunlar) {
+        # Registry yolunu .reg formatina cevir
+        $regYol = $s.Yol -replace '^HKLM:\\','[HKEY_LOCAL_MACHINE\' -replace '^HKCU:\\','[HKEY_CURRENT_USER\' -replace '\\','\'
+        $regYol = $regYol + "]"
+        $regIcerik.Add("; Tip: " + $s.Tip + " | Ad: " + $s.Ad)
+        $regIcerik.Add($regYol)
+        $regIcerik.Add("")
+    }
+    [System.IO.File]::WriteAllLines($yedekDosya, $regIcerik.ToArray(), [System.Text.Encoding]::Unicode)
+    Yaz ("  Yedek kaydedildi: " + (Split-Path $yedekDosya -Leaf)) Green
+
+    # ── TEMIZLIK ──
+    $silinen = 0; $atlanan = 0
+    foreach ($s in $sorunlar) {
+        try {
+            switch ($s.Tip) {
+                "Gecersiz SharedDLL" {
+                    $dllAd = $s.Detay
+                    Remove-ItemProperty -Path $sharedYol -Name $dllAd -Force -ErrorAction Stop
+                    $silinen++
+                }
+                default {
+                    # Kirik Uninstall, COM, App Path → anahtar sil
+                    Remove-Item -Path $s.Yol -Recurse -Force -ErrorAction Stop
+                    $silinen++
+                }
+            }
+        } catch {
+            $atlanan++
+        }
+    }
+
+    Write-Host ""
+    Yaz ("  {0} girdi temizlendi, {1} atlanadi." -f $silinen, $atlanan) Green
+    Yaz ("  Geri almak icin: " + (Split-Path $yedekDosya -Leaf) + " dosyasini cift tiklayin.") DarkGray
+    RaporVeriEkle "registry_temizlik" ("{0} girdi temizlendi" -f $silinen)
+}
+
+#endregion
+
+#region ── MODUL 65: PROGRAM KALDIRICI ──────────────────────
+
+function ProgramKaldirici {
+    Baslik "Program Kaldirici (Uninstaller)" "65"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    Yaz "  Yuklu programlar taraniyor (Registry yontemi)..." Cyan
+
+    # Win32_Product KULLANMIYORUZ — cok yavas. Registry okuyoruz.
+    $uninstYollar = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+    )
+
+    $programlar = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    foreach ($uy in $uninstYollar) {
+        if (-not (Test-Path $uy)) { continue }
+        Get-ChildItem $uy -ErrorAction SilentlyContinue | ForEach-Object {
+            $props = Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue
+            if (-not $props.DisplayName) { return }  # Isimsiz girdiler atla
+            if ($props.SystemComponent -eq 1) { return }  # Sistem bilesenleri atla
+            if ($props.ParentKeyName) { return }  # Alt bilesen/patch'ler atla
+
+            $boyut = if ($props.EstimatedSize) { [long]$props.EstimatedSize * 1024 } else { 0 }
+            $tarih = $null
+            if ($props.InstallDate -match '^\d{8}$') {
+                try { $tarih = [DateTime]::ParseExact($props.InstallDate, "yyyyMMdd", $null) } catch {}
+            }
+
+            $programlar.Add([PSCustomObject]@{
+                Ad          = $props.DisplayName
+                Surum       = if ($props.DisplayVersion) { $props.DisplayVersion } else { "-" }
+                Yayinci     = if ($props.Publisher) { $props.Publisher } else { "-" }
+                Boyut       = $boyut
+                Tarih       = $tarih
+                UninstStr   = $props.UninstallString
+                QUninstStr  = $props.QuietUninstallString
+                InstallYol  = $props.InstallLocation
+                RegYol      = $_.PSPath
+                Bitis       = if ($uy -match 'WOW6432') { "32bit" } elseif ($uy -match 'HKCU') { "Kullanici" } else { "64bit" }
+            })
+        }
+    }
+
+    # Isme gore sirala ve ciftleri cikar
+    $programlar = [System.Collections.Generic.List[PSCustomObject]]::new(
+        ($programlar | Sort-Object Ad -Unique)
+    )
+
+    Durum "Yuklu program" $programlar.Count.ToString() Cyan
+    Write-Host ""
+
+    if ($programlar.Count -eq 0) {
+        Yaz "  Hicbir program bulunamadi." Yellow
+        return
+    }
+
+    # Programlari listele (sayfalama: ilk 40)
+    $gosterilen = [Math]::Min($programlar.Count, 40)
+    for ($i = 0; $i -lt $gosterilen; $i++) {
+        $p = $programlar[$i]
+        $boyStr = if ($p.Boyut -gt 0) { BoyutFormatla $p.Boyut } else { "   -   " }
+        $tarStr = if ($p.Tarih) { $p.Tarih.ToString("dd.MM.yy") } else { "  -  " }
+        Write-Host ("  {0,3}.  {1,-38}  {2,-10}  {3,9}  [{4}]" -f ($i+1), `
+            $p.Ad.Substring(0, [Math]::Min(38, $p.Ad.Length)), `
+            $p.Surum.Substring(0, [Math]::Min(10, $p.Surum.Length)), `
+            $boyStr, $p.Bitis) -ForegroundColor Gray
+    }
+    if ($programlar.Count -gt 40) {
+        Yaz ("  ... ve {0} program daha (arama icin modul adini yazin)" -f ($programlar.Count - 40)) DarkGray
+    }
+
+    # GUI modunda kaldirma yapmiyoruz (Read-Host gerekli)
+    if ($env:SISTEMBAK_GUI -eq '1') {
+        Yaz ("  {0} program listelendi. CLI'dan kaldirim yapilabilir." -f $programlar.Count) Cyan
+        return
+    }
+
+    Write-Host ""
+    Write-Host "  Kaldirmak icin numara girin (0=geri): " -ForegroundColor Yellow -NoNewline
+    $secim = (Read-Host).Trim()
+    if ($secim -eq "0" -or $secim -eq "") { return }
+
+    $idx = 0
+    if (-not [int]::TryParse($secim, [ref]$idx) -or $idx -lt 1 -or $idx -gt $programlar.Count) {
+        Yaz "  Gecersiz secim." Red; return
+    }
+
+    $hedef = $programlar[$idx - 1]
+    Write-Host ""
+    Durum "Program" $hedef.Ad Yellow
+    Durum "Surum" $hedef.Surum Gray
+    Durum "Yayinci" $hedef.Yayinci Gray
+    Write-Host ""
+
+    if (-not (Onay ("'" + $hedef.Ad + "' kaldirilsin mi?"))) { return }
+
+    # ── Kaldirma islemi ──
+    $basarili = $false
+    try {
+        $kaldirKomut = if ($hedef.QUninstStr) { $hedef.QUninstStr } else { $hedef.UninstStr }
+        if (-not $kaldirKomut) {
+            Yaz "  HATA: Bu program icin kaldirim komutu bulunamadi." Red
+            return
+        }
+
+        Yaz ("  Kaldiriliyor: " + $hedef.Ad) Cyan
+
+        # MsiExec veya direkt EXE?
+        if ($kaldirKomut -match 'MsiExec') {
+            $guid = [regex]::Match($kaldirKomut, '\{[0-9A-Fa-f\-]+\}').Value
+            if ($guid) {
+                $proc = Start-Process -FilePath "msiexec.exe" -ArgumentList "/x $guid /qn /norestart" -Wait -PassThru
+                $basarili = ($proc.ExitCode -eq 0)
+            }
+        } else {
+            $exeYol = $kaldirKomut -replace '"',''
+            $proc = Start-Process -FilePath "cmd.exe" -ArgumentList ("/c " + $kaldirKomut) -Wait -PassThru
+            $basarili = ($proc.ExitCode -eq 0)
+        }
+    } catch {
+        Yaz ("  Kaldirim hatasi: " + $_.Exception.Message) Red
+    }
+
+    if ($basarili) {
+        Yaz ("  '" + $hedef.Ad + "' basariyla kaldirildi.") Green
+    } else {
+        Yaz "  Kaldirim tamamlanamadi veya kullanici iptal etti." Yellow
+    }
+
+    # ── ARTIK TARAMA (Leftover) ──
+    Write-Host ""
+    Yaz "  Artik dosya/registry taraniyor..." Cyan
+    $artikSay = 0
+
+    # 1. Registry artigi
+    if (Test-Path $hedef.RegYol) {
+        try {
+            Remove-Item $hedef.RegYol -Recurse -Force -ErrorAction Stop
+            $artikSay++
+            Yaz "    Registry girisi temizlendi." Green
+        } catch {}
+    }
+
+    # 2. Install klasoru artigi
+    if ($hedef.InstallYol -and (Test-Path $hedef.InstallYol)) {
+        $kalanDosya = (Get-ChildItem $hedef.InstallYol -Recurse -File -ErrorAction SilentlyContinue).Count
+        if ($kalanDosya -gt 0) {
+            Durum "    Kalan dosya" $kalanDosya.ToString() Yellow
+            if (Onay "    Artik klasor silinsin mi?") {
+                Remove-Item $hedef.InstallYol -Recurse -Force -ErrorAction SilentlyContinue
+                $artikSay++
+                Yaz "    Install klasoru temizlendi." Green
+            }
+        }
+    }
+
+    # 3. AppData artiklari
+    $appDataYollar = @(
+        (Join-Path $env:APPDATA $hedef.Ad),
+        (Join-Path $env:LOCALAPPDATA $hedef.Ad)
+    )
+    if ($hedef.Yayinci -and $hedef.Yayinci -ne "-") {
+        $appDataYollar += (Join-Path $env:APPDATA $hedef.Yayinci)
+        $appDataYollar += (Join-Path $env:LOCALAPPDATA $hedef.Yayinci)
+    }
+    foreach ($ay in $appDataYollar) {
+        if (Test-Path $ay) {
+            $artikSay++
+            Yaz ("    AppData artigi: " + $ay) DarkGray
+            Remove-Item $ay -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    if ($artikSay -gt 0) {
+        Yaz ("  {0} artik oge temizlendi." -f $artikSay) Green
+    } else {
+        Yaz "  Artik dosya/registry bulunamadi." Green
+    }
+    RaporVeriEkle "program_kaldirici" ("Kaldirildi: " + $hedef.Ad)
+}
+
+#endregion
+
+#region ── MODUL 66: YAZILIM GUNCELLEYICI ───────────────────
+
+function YazilimGuncelleyici {
+    Baslik "Yazilim Guncelleyici" "66"
+
+    Yaz "  Yuklu programlarin surumler kontrol ediliyor..." Cyan
+
+    # Registry'den program listesi (hizli yontem)
+    $uninstYollar = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+    )
+
+    $programlar = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    foreach ($uy in $uninstYollar) {
+        if (-not (Test-Path $uy)) { continue }
+        Get-ChildItem $uy -ErrorAction SilentlyContinue | ForEach-Object {
+            $props = Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue
+            if (-not $props.DisplayName -or -not $props.DisplayVersion) { return }
+            if ($props.SystemComponent -eq 1 -or $props.ParentKeyName) { return }
+
+            # Bilinen guncellenebilir programlar
+            $programlar.Add([PSCustomObject]@{
+                Ad    = $props.DisplayName
+                Surum = $props.DisplayVersion
+                Yayinci = if ($props.Publisher) { $props.Publisher } else { "-" }
+                URLInfo = $props.URLInfoAbout
+                URLUpdate = $props.URLUpdateInfo
+            })
+        }
+    }
+
+    $programlar = [System.Collections.Generic.List[PSCustomObject]]::new(
+        ($programlar | Sort-Object Ad -Unique)
+    )
+
+    # Winget mevcut mu?
+    $wingetVar = $false
+    try {
+        $wingetTest = winget --version 2>$null
+        if ($wingetTest) { $wingetVar = $true }
+    } catch {}
+
+    Durum "Yuklu program" $programlar.Count.ToString() Cyan
+    Durum "Winget" $(if ($wingetVar) {"Mevcut"} else {"Bulunamadi"}) $(if ($wingetVar) {"Green"} else {"Yellow"})
+    Write-Host ""
+
+    if ($wingetVar) {
+        Yaz "  Winget ile guncellemeleri kontrol ediliyor..." Cyan
+        Yaz "  (Bu islem birkaç dakika surebilir)" DarkGray
+        Write-Host ""
+
+        try {
+            $wingetCikti = winget upgrade 2>$null
+            $guncellemeler = [System.Collections.Generic.List[string]]::new()
+            $baslik_gecti = $false
+
+            foreach ($satir in $wingetCikti) {
+                # Winget cikti basligini atla
+                if ($satir -match '^[\-]+$') { $baslik_gecti = $true; continue }
+                if (-not $baslik_gecti) { continue }
+                if ($satir -match '^\s*$') { continue }
+                if ($satir -match 'upgrades available' -or $satir -match 'No installed') { continue }
+
+                $guncellemeler.Add($satir)
+            }
+
+            if ($guncellemeler.Count -gt 0) {
+                Durum "Guncelleme bekleyen" $guncellemeler.Count.ToString() Yellow
+                Write-Host ""
+                foreach ($g in $guncellemeler) {
+                    Write-Host ("    " + $g) -ForegroundColor Yellow
+                }
+                Write-Host ""
+
+                if (Onay "Tum guncellemeler yuklennsin mi? (winget upgrade --all)") {
+                    Yaz "  Guncellemeler baslatiliyor..." Cyan
+                    $proc = Start-Process -FilePath "winget" -ArgumentList "upgrade --all --accept-source-agreements --accept-package-agreements --silent" `
+                        -Wait -PassThru -NoNewWindow -ErrorAction Stop
+                    if ($proc.ExitCode -eq 0) {
+                        Yaz "  Guncellemeler basariyla tamamlandi!" Green
+                    } else {
+                        Yaz "  Bazi guncellemeler tamamlanamadi. Detay icin winget kullanin." Yellow
+                    }
+                }
+            } else {
+                Yaz "  Tum programlar guncel!" Green
+            }
+        } catch {
+            Yaz ("  Winget hatasi: " + $_.Exception.Message) Red
+        }
+    } else {
+        Yaz "  Winget bulunamadi. Manuel kontrol yapiliyor..." Yellow
+        Write-Host ""
+
+        # Winget yoksa: bilinen programlarin surumlerini listele
+        $eski_olabilir = [System.Collections.Generic.List[PSCustomObject]]::new()
+        $bilinen = @{
+            "Google Chrome"="chrome"; "Mozilla Firefox"="firefox"; "7-Zip"="7zip";
+            "VLC media player"="vlc"; "Notepad++"="notepad++"; "Visual Studio Code"="vscode";
+            "Git"="git"; "Node.js"="nodejs"; "Python"="python"; "Discord"="discord";
+            "Steam"="steam"; "Spotify"="spotify"; "Brave"="brave"; "Opera"="opera"
+        }
+
+        foreach ($p in $programlar) {
+            foreach ($b in $bilinen.GetEnumerator()) {
+                if ($p.Ad -like ("*" + $b.Key + "*")) {
+                    $eski_olabilir.Add([PSCustomObject]@{
+                        Ad=$p.Ad; Surum=$p.Surum; Yayinci=$p.Yayinci
+                        GuncellemeURL = if ($p.URLUpdate) { $p.URLUpdate } elseif ($p.URLInfo) { $p.URLInfo } else { "-" }
+                    })
+                    break
+                }
+            }
+        }
+
+        if ($eski_olabilir.Count -gt 0) {
+            Yaz ("  {0} bilinen program bulundu:" -f $eski_olabilir.Count) Yellow
+            Write-Host ""
+            foreach ($e in $eski_olabilir) {
+                Write-Host ("    {0,-35}  v{1,-12}  {2}" -f `
+                    $e.Ad.Substring(0, [Math]::Min(35, $e.Ad.Length)), `
+                    $e.Surum.Substring(0, [Math]::Min(12, $e.Surum.Length)), `
+                    $e.Yayinci) -ForegroundColor Gray
+            }
+            Write-Host ""
+            Yaz "  ONERI: Winget yukleyin → 'winget install winget' veya Microsoft Store" Yellow
+            Yaz "  Winget ile otomatik guncelleme yapilabilir." DarkGray
+        } else {
+            Yaz "  Bilinen guncellenebilir program bulunamadi." Gray
+        }
+    }
+
+    RaporVeriEkle "yazilim_guncelleyici" ("Tarama tamamlandi, " + $programlar.Count + " program")
+}
+
+#endregion
+
+#region ── MODUL 67: SISTEM GERI YUKLEME YONETICISI ─────────
+
+function SistemGeriYuklemeYonetici {
+    Baslik "Sistem Geri Yukleme Yoneticisi" "67"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    # Geri yukleme acik mi?
+    $srDurum = $false
+    try {
+        $srConfig = Get-CimInstance -ClassName SystemRestoreConfig -Namespace root\default -ErrorAction Stop
+        $srDurum = ($srConfig.RPSessionInterval -gt 0)
+    } catch {
+        try {
+            $gpYol = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore"
+            $disabled = (Get-ItemProperty $gpYol -Name "RPSessionInterval" -ErrorAction SilentlyContinue).RPSessionInterval
+            $srDurum = ($disabled -ne 0)
+        } catch {}
+    }
+
+    # Disk kullanimi
+    $vssKullanim = ""
+    try {
+        $vss = vssadmin list shadowstorage 2>$null
+        $kullanimSatir = $vss | Where-Object { $_ -match 'Used Shadow Copy Storage' }
+        if ($kullanimSatir) {
+            $vssKullanim = ($kullanimSatir -split ':')[-1].Trim()
+        }
+    } catch {}
+
+    Durum "Sistem Geri Yukleme" $(if ($srDurum){"AKTIF"} else {"KAPALI"}) $(if ($srDurum){"Green"} else {"Red"})
+    if ($vssKullanim) { Durum "VSS Disk Kullanimi" $vssKullanim Yellow }
+    Write-Host ""
+
+    # Mevcut noktalar
+    $noktalar = @(Get-ComputerRestorePoint -ErrorAction SilentlyContinue)
+    Durum "Geri yukleme noktasi" $noktalar.Count.ToString() Cyan
+
+    if ($noktalar.Count -gt 0) {
+        Write-Host ""
+        $sira = 0
+        foreach ($n in ($noktalar | Sort-Object CreationTime -Descending)) {
+            $sira++
+            $yas = ((Get-Date) - $n.CreationTime).Days
+            $yasStr = if ($yas -eq 0) { "bugun" } elseif ($yas -eq 1) { "dun" } else { "$yas gun" }
+            $tipStr = switch ($n.RestorePointType) {
+                0 {"Uygulama"} 6 {"Restore"} 7 {"Checkpoint"} 10 {"Cihaz"} 12 {"Install"} 13 {"Modify"} default {"Diger"}
+            }
+            $renk = if ($yas -gt 60) {"DarkGray"} elseif ($yas -gt 30) {"Yellow"} else {"White"}
+            Write-Host ("    {0,2}. [{1}]  {2,-8}  {3,-38}  {4}" -f $sira, `
+                $n.CreationTime.ToString("dd.MM.yy HH:mm"), $tipStr, `
+                $n.Description.Substring(0, [Math]::Min(38, $n.Description.Length)), $yasStr) -ForegroundColor $renk
+        }
+    }
+
+    Write-Host ""
+    Yaz "  Islemler:" Cyan
+    Yaz "    [1]  Yeni geri yukleme noktasi olustur" White
+    Yaz "    [2]  Eski noktalari temizle (son 3 haric)" White
+    Yaz "    [3]  Geri yuklemeyi AKTiF et (kapali ise)" White
+    Yaz "    [0]  Geri" White
+    Write-Host ""
+    Write-Host "  Secim: " -ForegroundColor Yellow -NoNewline
+    $secim = if ($env:SISTEMBAK_GUI -eq '1') { "1" } else { (Read-Host).Trim() }
+
+    switch ($secim) {
+        "1" {
+            $etiket = "SistemBakim_Manuel_{0}" -f (Get-Date -Format "dd.MM.yyyy_HHmm")
+            try {
+                Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
+                Checkpoint-Computer -Description $etiket -RestorePointType MODIFY_SETTINGS -ErrorAction Stop
+                Yaz ("  Geri yukleme noktasi olusturuldu: " + $etiket) Green
+            } catch {
+                Yaz ("  Hata: " + $_.Exception.Message) Red
+                Yaz "  Not: Ayni gun icinde 1'den fazla nokta olusturulamayabilir (Windows sinirlamasi)." DarkGray
+            }
+        }
+        "2" {
+            if ($noktalar.Count -le 3) {
+                Yaz "  3 veya daha az nokta var, temizlik gerekmez." Green
+                return
+            }
+            $silinecek = $noktalar | Sort-Object CreationTime | Select-Object -First ($noktalar.Count - 3)
+            Yaz ("  {0} eski nokta silinecek (son 3 korunacak)." -f $silinecek.Count) Yellow
+            if (Onay "Devam edilsin mi?") {
+                # vssadmin ile en eski snapshot'lari sil
+                try {
+                    vssadmin delete shadows /for=C: /oldest /quiet 2>$null | Out-Null
+                    Yaz "  Eski geri yukleme noktalari temizlendi." Green
+                } catch {
+                    Yaz "  Temizlik sirasinda hata olustu." Red
+                }
+            }
+        }
+        "3" {
+            try {
+                Enable-ComputerRestore -Drive "C:\" -ErrorAction Stop
+                Yaz "  Sistem Geri Yukleme C: icin AKTIF edildi." Green
+            } catch {
+                Yaz ("  Hata: " + $_.Exception.Message) Red
+            }
+        }
+        default { return }
+    }
+    RaporVeriEkle "geri_yukleme" "Islem tamamlandi"
+}
+
+#endregion
+
+#region ── MODUL 68: WINDOWS HIZMET KONFIGURATORU ────────────
+
+function HizmetKonfiguratoru {
+    Baslik "Windows Hizmet Konfiguratoru" "68"
+    if (-not (YoneticiKontrol)) { Yaz "  Yonetici yetkisi gereklidir." Red; return }
+
+    # ── PROFIL TANIMLARI ──
+    # Her profil: ServisAdi → HedefDurum (Disabled / Manual / Automatic)
+    # Sadece Microsoft servisleri, 3. parti dokunulmaz
+    # "Korunacaklar" listesi: asla degistirilmemesi gerekenler
+
+    $korunanlar = @(
+        "wuauserv","WinDefend","mpssvc","EventLog","Dhcp","Dnscache","LanmanWorkstation",
+        "LanmanServer","RpcSs","RpcEptMapper","LSM","Winmgmt","Schedule","ProfSvc",
+        "BFE","CryptSvc","DcomLaunch","Power","PlugPlay","SamSs","SecurityHealthService"
+    )
+
+    $profiller = @{
+        "1" = @{
+            Ad = "Oyun Modu"
+            Aciklama = "Arka plan servislerini minimize eder, maksimum performans"
+            Servisler = @{
+                "SysMain"          = "Disabled"   # SuperFetch - RAM baskisi azalir
+                "WSearch"          = "Disabled"   # Windows Search Indexer
+                "DiagTrack"        = "Disabled"   # Telemetri
+                "dmwappushservice"  = "Disabled"   # WAP push
+                "MapsBroker"       = "Disabled"   # Offline Maps
+                "TabletInputService"= "Disabled"  # Dokunmatik klavye (masaustunde gereksiz)
+                "WbioSrvc"         = "Disabled"   # Biyometrik (oyunda gereksiz)
+                "lfsvc"            = "Disabled"   # Konum servisi
+                "wisvc"            = "Disabled"   # Windows Insider
+                "RetailDemo"       = "Disabled"   # Magaza demo modu
+                "Fax"              = "Disabled"   # Faks servisi
+                "PrintNotify"      = "Manual"     # Yazici bildirimleri
+                "Spooler"          = "Manual"     # Yazici kuyrugu (oyunda gereksiz)
+            }
+        }
+        "2" = @{
+            Ad = "Is / Ofis Modu"
+            Aciklama = "Yazici, arama ve uretkenlik servisleri aktif, gereksizler kapali"
+            Servisler = @{
+                "SysMain"          = "Automatic"  # SuperFetch acik - SSD onbellekleme
+                "WSearch"          = "Automatic"  # Dosya arama aktif
+                "Spooler"          = "Automatic"  # Yazici kuyrugu aktif
+                "PrintNotify"      = "Automatic"  # Yazici bildirimleri aktif
+                "DiagTrack"        = "Disabled"   # Telemetri hala kapali
+                "dmwappushservice"  = "Disabled"
+                "MapsBroker"       = "Disabled"
+                "RetailDemo"       = "Disabled"
+                "Fax"              = "Disabled"
+                "wisvc"            = "Disabled"
+                "TabletInputService"= "Manual"
+                "WbioSrvc"         = "Manual"     # Parmak izi giris (is icin faydali)
+                "lfsvc"            = "Manual"
+            }
+        }
+        "3" = @{
+            Ad = "Gunluk Kullanim"
+            Aciklama = "Dengeli profil: cogu servis varsayilan, sadece gereksizler kapali"
+            Servisler = @{
+                "SysMain"          = "Automatic"
+                "WSearch"          = "Automatic"
+                "Spooler"          = "Automatic"
+                "PrintNotify"      = "Automatic"
+                "DiagTrack"        = "Manual"     # Telemetri minimum
+                "dmwappushservice"  = "Manual"
+                "MapsBroker"       = "Manual"
+                "TabletInputService"= "Manual"
+                "WbioSrvc"         = "Manual"
+                "lfsvc"            = "Manual"
+                "wisvc"            = "Disabled"
+                "RetailDemo"       = "Disabled"
+                "Fax"              = "Disabled"
+            }
+        }
+    }
+
+    # ── MEVCUT DURUMLARI TARA ──
+    Yaz "  Mevcut servis durumlari taraniyor..." Cyan
+    $mevcutBilgi = @{}
+    $tumServisler = @()
+    foreach ($p in $profiller.Values) { $tumServisler += $p.Servisler.Keys }
+    $tumServisler = $tumServisler | Sort-Object -Unique
+
+    foreach ($srvAd in $tumServisler) {
+        try {
+            $srv = Get-Service -Name $srvAd -ErrorAction Stop
+            $baslama = (Get-CimInstance Win32_Service -Filter "Name='$srvAd'" -ErrorAction Stop).StartMode
+            $mevcutBilgi[$srvAd] = @{ Durum=$srv.Status.ToString(); Baslama=$baslama; Goruntu=$srv.DisplayName }
+        } catch {
+            $mevcutBilgi[$srvAd] = $null  # Servis bu sistemde yok
+        }
+    }
+
+    $bulunan = ($mevcutBilgi.Values | Where-Object { $_ -ne $null }).Count
+    Durum "Taninan servisler" ("{0}/{1}" -f $bulunan, $tumServisler.Count)
+    Write-Host ""
+
+    # ── PROFIL SECIMI ──
+    Yaz "  Hazir Profiller:" Yellow
+    foreach ($pk in ($profiller.Keys | Sort-Object)) {
+        $p = $profiller[$pk]
+        Write-Host ("    [{0}] {1}" -f $pk, $p.Ad) -ForegroundColor Green
+        Write-Host ("        {0}" -f $p.Aciklama) -ForegroundColor DarkGray
+        # Kac servis degisecek?
+        $degisecek = 0
+        foreach ($sa in $p.Servisler.Keys) {
+            $mevcut = $mevcutBilgi[$sa]
+            if ($mevcut -eq $null) { continue }
+            $hedef = $p.Servisler[$sa]
+            if ($mevcut.Baslama -ne $hedef) { $degisecek++ }
+        }
+        Write-Host ("        {0} servis degisecek" -f $degisecek) -ForegroundColor DarkGray
+    }
+    Write-Host ("    [4] Iptal") -ForegroundColor DarkGray
+    Write-Host ""
+
+    $secim = Read-Host "  Profil seciniz (1-4)"
+    if ($secim -notin @("1","2","3")) {
+        Yaz "  Islem iptal edildi." DarkGray; return
+    }
+
+    $secilenProfil = $profiller[$secim]
+    Yaz ("  Secilen profil: " + $secilenProfil.Ad) Green
+    Write-Host ""
+
+    # ── YEDEK AL (geri donme icin) ──
+    $yedekDosya = Join-Path $LOG_KLASOR ("HizmetYedek_{0}.json" -f (Get-Date -Format "yyyyMMdd_HHmm"))
+    $yedekVeri = @{}
+    foreach ($sa in $secilenProfil.Servisler.Keys) {
+        $mevcut = $mevcutBilgi[$sa]
+        if ($mevcut -ne $null) {
+            $yedekVeri[$sa] = @{ OncekiBaslama=$mevcut.Baslama; OncekiDurum=$mevcut.Durum; Goruntu=$mevcut.Goruntu }
+        }
+    }
+    $yedekVeri | ConvertTo-Json -Depth 3 | Set-Content $yedekDosya -Encoding UTF8
+    Yaz ("  Yedek kaydedildi: " + (Split-Path $yedekDosya -Leaf)) DarkGray
+
+    # ── ONAY ──
+    $degisecekSayisi = 0
+    foreach ($sa in $secilenProfil.Servisler.Keys) {
+        $mevcut = $mevcutBilgi[$sa]
+        if ($mevcut -eq $null) { continue }
+        if ($mevcut.Baslama -ne $secilenProfil.Servisler[$sa]) { $degisecekSayisi++ }
+    }
+
+    if ($degisecekSayisi -eq 0) {
+        Yaz "  Sistem zaten bu profile uygun. Degisiklik gerekmiyor." Green; return
+    }
+
+    if (-not (Onay ("{0} adet servis '{1}' profiline gore ayarlanacak. Devam?" -f $degisecekSayisi, $secilenProfil.Ad))) { return }
+
+    # ── UYGULA ──
+    $basarili = 0; $atlanan = 0
+    foreach ($sa in $secilenProfil.Servisler.Keys) {
+        $mevcut = $mevcutBilgi[$sa]
+        if ($mevcut -eq $null) { continue }
+
+        # Koruma kontrolu (ekstra guvenlik)
+        if ($sa -in $korunanlar) { $atlanan++; continue }
+
+        $hedef = $secilenProfil.Servisler[$sa]
+        if ($mevcut.Baslama -eq $hedef) { continue }  # Zaten dogru durumda
+
+        try {
+            # Baslama tipini degistir
+            Set-Service -Name $sa -StartupType $hedef -ErrorAction Stop
+
+            # Disabled ise durdur, Automatic ise baslat
+            if ($hedef -eq "Disabled") {
+                Stop-Service -Name $sa -Force -ErrorAction SilentlyContinue
+            } elseif ($hedef -eq "Automatic") {
+                Start-Service -Name $sa -ErrorAction SilentlyContinue
+            }
+
+            $eski = $mevcut.Baslama
+            Write-Host ("    {0,-28} {1,-12} -> {2}" -f $mevcut.Goruntu, $eski, $hedef) -ForegroundColor $(if ($hedef -eq "Disabled"){"Yellow"} elseif ($hedef -eq "Automatic"){"Green"} else {"Cyan"})
+            $basarili++
+        } catch {
+            Write-Host ("    {0,-28} HATA: {1}" -f $mevcut.Goruntu, $_.Exception.Message) -ForegroundColor Red
+            $atlanan++
+        }
+    }
+
+    Write-Host ""
+    Yaz ("{0} servis ayarlandi, {1} atlandi." -f $basarili, $atlanan) Green
+    Yaz ("  Geri almak icin: " + (Split-Path $yedekDosya -Leaf) + " dosyasindaki degerleri kullanin.") DarkGray
+    Yaz "  Bazi degisiklikler yeniden baslatma sonrasi etkili olacaktir." DarkGray
+    RaporVeriEkle "hizmet_konfigurator" ("{0} servis '{1}' profiline ayarlandi" -f $basarili, $secilenProfil.Ad)
+}
+
+#endregion
+
+#region ── MODUL 69: AG MONITORU ─────────────────────────────
+
+function AgMonitoru {
+    Baslik "Ag Monitoru (Canli Bant Genisligi)" "69"
+
+    # ── AKTIF AG ARAYUZLERINI BUL ──
+    $arayuzler = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() |
+        Where-Object { $_.OperationalStatus -eq 'Up' -and $_.NetworkInterfaceType -ne 'Loopback' }
+
+    if ($arayuzler.Count -eq 0) {
+        Yaz "  Aktif ag arayuzu bulunamadi." Red; return
+    }
+
+    # Arayuz bilgisi goster
+    Yaz "  Aktif ag arayuzleri:" Cyan
+    foreach ($a in $arayuzler) {
+        $hizMbps = [math]::Round($a.Speed / 1MB, 0)
+        Write-Host ("    - {0} ({1}, {2} Mbps)" -f $a.Name, $a.NetworkInterfaceType, $hizMbps) -ForegroundColor DarkGray
+    }
+    Write-Host ""
+
+    # ── ANLIK OLCUM (2 aralikli delta) ──
+    Yaz "  Bant genisligi olculuyor (3 saniye)..." Cyan
+    Write-Host ""
+
+    # 1. olcum
+    $olcum1 = @{}
+    foreach ($a in $arayuzler) {
+        $stat = $a.GetIPStatistics()
+        $olcum1[$a.Id] = @{ Rx=$stat.BytesReceived; Tx=$stat.BytesSent; Zaman=[DateTime]::Now }
+    }
+
+    Start-Sleep -Seconds 3
+
+    # 2. olcum + delta hesapla
+    $topRx = 0; $topTx = 0
+    foreach ($a in $arayuzler) {
+        $stat = $a.GetIPStatistics()
+        $dt = ([DateTime]::Now - $olcum1[$a.Id].Zaman).TotalSeconds
+        if ($dt -le 0) { $dt = 1 }
+
+        $rxSaniye = [math]::Round(($stat.BytesReceived - $olcum1[$a.Id].Rx) / $dt, 0)
+        $txSaniye = [math]::Round(($stat.BytesSent - $olcum1[$a.Id].Tx) / $dt, 0)
+        $topRx += $rxSaniye; $topTx += $txSaniye
+
+        # Anlik hiz formatlama
+        $rxStr = if ($rxSaniye -ge 1MB) { ("{0:N1} MB/s" -f ($rxSaniye/1MB)) }
+                 elseif ($rxSaniye -ge 1KB) { ("{0:N0} KB/s" -f ($rxSaniye/1KB)) }
+                 else { ("{0} B/s" -f $rxSaniye) }
+        $txStr = if ($txSaniye -ge 1MB) { ("{0:N1} MB/s" -f ($txSaniye/1MB)) }
+                 elseif ($txSaniye -ge 1KB) { ("{0:N0} KB/s" -f ($txSaniye/1KB)) }
+                 else { ("{0} B/s" -f $txSaniye) }
+
+        $renk = if ($rxSaniye -ge 1MB -or $txSaniye -ge 1MB) {"Yellow"} else {"Green"}
+        Write-Host ("    {0,-30} Indirme: {1,-14} Yukleme: {2}" -f $a.Name, $rxStr, $txStr) -ForegroundColor $renk
+    }
+
+    Write-Host ""
+    $topRxStr = if ($topRx -ge 1MB) { ("{0:N1} MB/s" -f ($topRx/1MB)) }
+                elseif ($topRx -ge 1KB) { ("{0:N0} KB/s" -f ($topRx/1KB)) }
+                else { ("{0} B/s" -f $topRx) }
+    $topTxStr = if ($topTx -ge 1MB) { ("{0:N1} MB/s" -f ($topTx/1MB)) }
+                elseif ($topTx -ge 1KB) { ("{0:N0} KB/s" -f ($topTx/1KB)) }
+                else { ("{0} B/s" -f $topTx) }
+    Durum "Toplam Indirme" $topRxStr
+    Durum "Toplam Yukleme" $topTxStr
+
+    # ── TOPLAM TRANSFER ISTATISTIKLERI ──
+    Write-Host ""
+    Yaz "  Oturum basindan beri toplam transfer:" Cyan
+    foreach ($a in $arayuzler) {
+        $stat = $a.GetIPStatistics()
+        $rxToplam = BoyutFormatla $stat.BytesReceived
+        $txToplam = BoyutFormatla $stat.BytesSent
+        Write-Host ("    {0,-30} Rx: {1,-10}  Tx: {2}" -f $a.Name, $rxToplam, $txToplam) -ForegroundColor DarkGray
+    }
+
+    # ── UYGULAMA BAZLI AG BAGLANTILARI ──
+    Write-Host ""
+    Yaz "  Uygulama bazli aktif ag baglantilari:" Yellow
+    Write-Host ("    {0,-6} {1,-28} {2,-24} {3}" -f "PID","Uygulama","Uzak Adres","Durum") -ForegroundColor DarkGray
+    Write-Host ("    " + ("-" * 78)) -ForegroundColor DarkGray
+
+    try {
+        $baglantilar = Get-NetTCPConnection -State Established -ErrorAction Stop |
+            Where-Object { $_.RemoteAddress -notmatch '^(127\.|::1|0\.0\.)' -and $_.OwningProcess -ne 0 }
+
+        # PID bazli gruplama
+        $gruplar = $baglantilar | Group-Object OwningProcess | Sort-Object Count -Descending | Select-Object -First 20
+
+        $uygulamaSayac = 0
+        foreach ($g in $gruplar) {
+            $pid = [int]$g.Name
+            try {
+                $proc = Get-Process -Id $pid -ErrorAction Stop
+                $procAd = $proc.ProcessName
+            } catch {
+                $procAd = "(?)"
+            }
+
+            # Baglanti sayisi
+            $bagSayisi = $g.Count
+            $ilkBag = $g.Group | Select-Object -First 1
+            $uzakAdres = "{0}:{1}" -f $ilkBag.RemoteAddress, $ilkBag.RemotePort
+            $durumStr = if ($bagSayisi -gt 1) { "Established ({0} bag.)" -f $bagSayisi } else { "Established" }
+
+            $renk = if ($bagSayisi -ge 10) {"Yellow"} elseif ($bagSayisi -ge 5) {"Cyan"} else {"White"}
+            Write-Host ("    {0,-6} {1,-28} {2,-24} {3}" -f $pid, $procAd, $uzakAdres, $durumStr) -ForegroundColor $renk
+            $uygulamaSayac++
+        }
+
+        if ($uygulamaSayac -eq 0) {
+            Yaz "    Aktif dis baglanti bulunamadi." DarkGray
+        }
+    } catch {
+        Yaz ("    Baglanti bilgisi alinamadi: " + $_.Exception.Message) Red
+    }
+
+    # ── DINLEYEN PORTLAR (GUVENLIK AMAÇLI) ──
+    Write-Host ""
+    Yaz "  Dinleyen (LISTEN) portlar:" Cyan
+    try {
+        $dinleyenler = Get-NetTCPConnection -State Listen -ErrorAction Stop |
+            Where-Object { $_.LocalAddress -notmatch '^(::1)$' } |
+            Sort-Object LocalPort | Select-Object -First 15
+
+        foreach ($d in $dinleyenler) {
+            $pid = $d.OwningProcess
+            try { $procAd = (Get-Process -Id $pid -ErrorAction Stop).ProcessName } catch { $procAd = "(?)" }
+            $adres = "{0}:{1}" -f $d.LocalAddress, $d.LocalPort
+            $renk = if ($d.LocalPort -lt 1024) {"Yellow"} else {"DarkGray"}
+            Write-Host ("    Port {0,-22} PID {1,-6} {2}" -f $adres, $pid, $procAd) -ForegroundColor $renk
+        }
+    } catch {
+        Yaz "    Port bilgisi alinamadi." Red
+    }
+
+    # ── DNS CACHE ISTATISTIKLERI ──
+    Write-Host ""
+    Yaz "  DNS Onbellek istatistikleri:" Cyan
+    try {
+        $dnsCache = Get-DnsClientCache -ErrorAction Stop
+        $dnsSayisi = ($dnsCache | Measure-Object).Count
+        $benzersizDomain = ($dnsCache | Select-Object -ExpandProperty Entry -Unique | Measure-Object).Count
+        Durum "Onbellekteki kayitlar" $dnsSayisi.ToString()
+        Durum "Benzersiz domain" $benzersizDomain.ToString()
+
+        if ($dnsSayisi -gt 0) {
+            Yaz "  Son erisilenler:" DarkGray
+            $dnsCache | Select-Object Entry -Unique | Select-Object -First 10 | ForEach-Object {
+                Write-Host ("    - {0}" -f $_.Entry) -ForegroundColor DarkGray
+            }
+        }
+    } catch {
+        Yaz "    DNS onbellek bilgisi alinamadi." DarkGray
+    }
+
+    Write-Host ""
+    Yaz "  Olcum tamamlandi." Green
+    RaporVeriEkle "ag_monitor" ("Indirme: {0}, Yukleme: {1}, {2} aktif baglanti" -f $topRxStr, $topTxStr, $uygulamaSayac)
+}
+
 #endregion
 
 #region ── ANA DÖNGÜ ─────────────────────────────────────────
@@ -6566,7 +8799,16 @@ function Ana {
         "50"="OEM Bloatware Tespiti";
         "51"="Boot Suresi Analizi";
         "52"="Sag Tik Menu Temizle";
-        "53"="DNS Benchmark"
+        "53"="DNS Benchmark";
+        "54"="WiFi Ag Taramasi";
+        "55"="Bos Klasor Bulucu"; "56"="Dosya Kirpici Shredder";
+        "57"="USB Cihaz Gecmisi"; "58"="Hosts Dosyasi Editoru";
+        "59"="Zamanlama Gorevi Temizle";
+        "60"="Gizlilik Kalkani AntiSpy"; "61"="Turbo Boost Modu";
+        "62"="Baglam Menusu Yoneticisi"; "63"="Baslangic Gecikme Yoneticisi";
+        "64"="Registry Temizleyici"; "65"="Program Kaldirici";
+        "66"="Yazilim Guncelleyici"; "67"="Sistem Geri Yukleme Yoneticisi";
+        "68"="Windows Hizmet Konfiguratoru"; "69"="Ag Monitoru"
     }
 
     while ($true) {
@@ -6611,7 +8853,7 @@ function Ana {
                 if ($secimTemiz -eq "") { continue }
             } else {
                 Yaz ("  '" + $secimTemiz + "' ile eslesen modul bulunamadi.") Red
-                Yaz "  Ipucu: 0-53 arasi numara veya modul adi yazin. ? = gecmis" DarkGray
+                Yaz "  Ipucu: 0-54 arasi numara veya modul adi yazin. ? = gecmis" DarkGray
                 Write-Host ""
                 Write-Host "  [Devam icin bir tusa basin...]" -ForegroundColor DarkGray
                 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
@@ -6684,6 +8926,22 @@ function Ana {
             "51" { BootSuresiAnalizi }
             "52" { SagTikMenuTemizle }
             "53" { DNSBenchmark }
+            "54" { WiFiCihazTarama }
+            "55" { BosKlasorBulucu }
+            "56" { DosyaKirpici }
+            "57" { USBCihazGecmisi }
+            "58" { HostsDosyasiEditoru }
+            "59" { ZamanlamaGoreviTemizle }
+            "60" { GizlilikKalkani }
+            "61" { TurboBoostModu }
+            "62" { BaglamMenusuYonetici }
+            "63" { BaslangicGecikmeYonetici }
+            "64" { RegistryTemizleyici }
+            "65" { ProgramKaldirici }
+            "66" { YazilimGuncelleyici }
+            "67" { SistemGeriYuklemeYonetici }
+            "68" { HizmetKonfiguratoru }
+            "69" { AgMonitoru }
             "0"  {
                 Write-Host ""
                 Write-Host "  ============================================" -ForegroundColor DarkCyan
@@ -6694,7 +8952,7 @@ function Ana {
                 Add-Content $LOG_DOSYA ("OTURUM SONA ERDI: {0}" -f (Get-Date -Format "HH:mm:ss"))
                 return
             }
-            default { Yaz ("  Gecersiz secim '" + $secimTemiz + "'. 0-53 arasi girin veya modul adi yazin.") Red }
+            default { Yaz ("  Gecersiz secim '" + $secimTemiz + "'. 0-69 arasi girin veya modul adi yazin.") Red }
         }
 
         Write-Host ""

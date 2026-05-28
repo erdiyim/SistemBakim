@@ -1,13 +1,74 @@
-# Bakim raporlari ve loglar (kisisel veri icerdigindan repoya dahil edilmez)
+# ============================================================
+#  SistemBakim — .gitignore
+#  Son guncelleme: v5.0.0 release
+# ============================================================
+
+# ── Derleme Ciktilari (Build Artifacts) ─────────────────────
+# EXE dosyalari CI/CD pipeline tarafindan uretilir, repo'da tutulmaz
+bin/
+archive/
+installer/output/
+src/_Merged_GUI_temp.ps1
+
+# ── Bakim Raporlari ve Loglar ───────────────────────────────
+# Kullanici verileri — kisisel bilgi icerebilir
 BakimRaporlari/
 *.log
-*.html
 skor_gecmis.json
 
-# Gecici dosyalar
-*.tmp
-Thumbs.db
-.DS_Store
+# ── Test Ciktilari ──────────────────────────────────────────
+tests/_FeatureTest_Results.txt
+tests/*.log
+tests/*.html
 
-# Windows
+# ── Windows Sistem Dosyalari ────────────────────────────────
+Thumbs.db
+ehthumbs.db
 desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ── macOS / Linux (PR yapanlar icin) ────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# ── Gecici Dosyalar ─────────────────────────────────────────
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# ── IDE / Editor ────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln.docstates
+
+# ── PowerShell ──────────────────────────────────────────────
+# ps2exe gecici dosyalari
+*.exe.config
+*.pdb
+
+# ── Inno Setup Gecici ──────────────────────────────────────
+installer/output/
+*.~is
+
+# ── Hassas Veriler (ASLA commit edilmemeli) ─────────────────
+*.pfx
+*.p12
+*.key
+*.pem
+*.env
+*.env.*
+credentials.json
+secrets.json
+*.cer
+*.cert
+
+# ── Claude Code yerel ayarlar ──────────────────────────────
+.claude/settings.local.json

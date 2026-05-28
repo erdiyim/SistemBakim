@@ -1,0 +1,172 @@
+name: "\U0001F41B Bug Report / Hata Bildirimi"
+description: "Bir hata veya beklenmeyen davranis bildirin. / Report a bug or unexpected behavior."
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Hata Bildirimi / Bug Report
+
+        Hatanin tekrarlanabilmesi icin lutfen asagidaki alanlari mumkun oldugunca eksiksiz doldurun.
+        *Please fill in the fields below as completely as possible so we can reproduce the issue.*
+
+  # ── Sistem Bilgileri ──────────────────────────────────────────
+
+  - type: dropdown
+    id: windows-version
+    attributes:
+      label: "Windows Surumu / Windows Version"
+      description: "Hangi Windows surumunu kullaniyorsunuz?"
+      options:
+        - "Windows 11 24H2"
+        - "Windows 11 23H2"
+        - "Windows 11 22H2"
+        - "Windows 10 22H2"
+        - "Windows 10 21H2"
+        - "Diger / Other"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sistem-dili
+    attributes:
+      label: "Sistem Dili / System Language"
+      description: "Windows sistem diliniz nedir?"
+      options:
+        - "Turkce (tr-TR)"
+        - "English (en-US)"
+        - "English (en-GB)"
+        - "Deutsch (de-DE)"
+        - "Diger / Other"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: app-version
+    attributes:
+      label: "SistemBakim Surumu / App Version"
+      description: "Hangi SistemBakim surumunu kullaniyorsunuz?"
+      options:
+        - "v5.0 (Latest)"
+        - "v5.0 (Setup Installer)"
+        - "v5.0 (Portable EXE)"
+        - "Bilmiyorum / Unknown"
+    validations:
+      required: true
+
+  # ── Hata Detaylari ──────────────────────────────────────────
+
+  - type: dropdown
+    id: modul
+    attributes:
+      label: "Hatanin Yasandigi Modul / Affected Module"
+      description: "Hata hangi modulde olustu? Birden fazla secebilirsiniz."
+      multiple: true
+      options:
+        - "Genel / Uygulama Acilisi (General / App Launch)"
+        - "Smart Scan Sihirbazi"
+        - "Derin Temizlik (Deep Clean)"
+        - "Registry Temizleyici"
+        - "Browser Temizleyici"
+        - "WinSxS Temizlik"
+        - "Windows Log Temizle"
+        - "Disk Haritasi (Treemap)"
+        - "Bos Klasor Bulucu"
+        - "FPS Optimizer"
+        - "Turbo Boost"
+        - "RAM Optimizer"
+        - "Baslangic Geciktirici (Startup Delay)"
+        - "Hizmet Konfiguratoru (Service Config)"
+        - "Gizlilik Kalkani (Privacy Shield)"
+        - "Dosya Kirpici (File Shredder)"
+        - "USB Gecmisi"
+        - "Hosts Editoru"
+        - "Ag Monitoru (Network Monitor)"
+        - "DNS Benchmark"
+        - "WiFi Tarayici"
+        - "Internet Hiz Testi"
+        - "Saglik Skoru"
+        - "HTML Dashboard"
+        - "Disa Aktarma (Export)"
+        - "Tema Degistirme"
+        - "Oncesi/Sonrasi Karsilastirma"
+        - "Diger / Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hata-aciklama
+    attributes:
+      label: "Hatanin Aciklamasi / Bug Description"
+      description: "Ne olmasini bekliyordunuz ve ne oldu?"
+      placeholder: |
+        Beklenen davranis: ...
+        Gerceklesen davranis: ...
+
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: tekrar-adimlari
+    attributes:
+      label: "Tekrarlama Adimlari / Steps to Reproduce"
+      description: "Hatayi tekrarlamak icin adimlari yazin."
+      placeholder: |
+        1. Uygulamayi yonetici olarak calistir
+        2. '...' modulune tikla
+        3. '...' butonuna bas
+        4. Hata olusuyor
+    validations:
+      required: true
+
+  # ── Log ve Gorseller ──────────────────────────────────────────
+
+  - type: textarea
+    id: log-ciktisi
+    attributes:
+      label: "Log Ciktisi / Log Output"
+      description: "Varsa hata ile ilgili log ciktisini yapisitirin. Log dosyalari: `%APPDATA%\\SistemBakim\\logs\\`"
+      render: powershell
+      placeholder: |
+        Buraya log ciktisini yapisitirin...
+        Paste relevant log output here...
+
+  - type: textarea
+    id: ekran-goruntusu
+    attributes:
+      label: "Ekran Goruntusu / Screenshot"
+      description: "Hatayi gosteren ekran goruntusunu surukleyip birakin."
+      placeholder: |
+        Goruntuleri buraya surukleyin veya yapisitirin.
+        Drag and drop screenshots here.
+
+  # ── Ek Bilgi ──────────────────────────────────────────────────
+
+  - type: dropdown
+    id: ciddiyet
+    attributes:
+      label: "Ciddiyet / Severity"
+      options:
+        - "Kritik — Uygulama cokuyor / veri kaybi (Critical — crash / data loss)"
+        - "Yuksek — Modul calismadigi icin is yapamiyorum (High — module broken)"
+        - "Orta — Calisiyor ama beklenmedik sonuc (Medium — works but wrong result)"
+        - "Dusuk — Gorsel/kozmetik sorun (Low — visual/cosmetic)"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: dogrulama
+    attributes:
+      label: "Kontrol Listesi / Checklist"
+      options:
+        - label: "Uygulamayi yonetici olarak calistirdim / I ran the app as Administrator"
+          required: true
+        - label: "En son surumu kullaniyorum / I am using the latest version"
+          required: true
+        - label: "Ayni sorunu daha once arattim / I searched for existing issues"
+          required: true
