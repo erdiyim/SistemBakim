@@ -2,53 +2,53 @@
 
 # SistemBakim v5.0.0 — Final Git Push Playbook
 
-### Pre-flight Check · Epic Commit · Terminal Komutlari
+### Pre-flight Check · Epic Commit · Terminal Komutları
 
 </div>
 
 ---
 
-# 1. Pre-flight Check — Guvenlik Kontrolu
+# 1. Pre-flight Check — Güvenlik Kontrolü
 
 ## .gitignore Durumu: ✅ HAZIR
 
-Guncellenmis `.gitignore` asagidakileri engelliyor:
+Güncellenmiş `.gitignore` aşağıdakileri engelliyor:
 
 | Kategori | Pattern | Neden |
 |----------|---------|-------|
-| Build ciktilari | `bin/`, `archive/`, `installer/output/` | CI/CD uretir, repo'da tutulmaz |
-| Gecici derleme | `src/_Merged_GUI_temp.ps1` | Build-EXE.ps1 gecici dosyasi |
-| Loglar | `*.log`, `BakimRaporlari/`, `skor_gecmis.json` | Kisisel veri icerir |
-| Test ciktilari | `tests/_FeatureTest_Results.txt` | Makine bazli sonuclar |
+| Build çıktıları | `bin/`, `archive/`, `installer/output/` | CI/CD üretir, repo'da tutulmaz |
+| Geçici derleme | `src/_Merged_GUI_temp.ps1` | Build-EXE.ps1 geçici dosyası |
+| Loglar | `*.log`, `BakimRaporlari/`, `skor_gecmis.json` | Kişisel veri içerir |
+| Test çıktıları | `tests/_FeatureTest_Results.txt` | Makine bazlı sonuçlar |
 | Hassas dosyalar | `*.pfx`, `*.key`, `*.pem`, `*.env`, `credentials.json` | ASLA commit edilmemeli |
-| IDE | `.vscode/`, `.idea/` | Kisisel editor ayarlari |
-| OS | `Thumbs.db`, `.DS_Store`, `desktop.ini` | Isletim sistemi artiklari |
-| Claude Code | `.claude/settings.local.json` | Yerel kullanici ayarlari |
+| IDE | `.vscode/`, `.idea/` | Kişisel editör ayarları |
+| OS | `Thumbs.db`, `.DS_Store`, `desktop.ini` | İşletim sistemi artıkları |
+| Claude Code | `.claude/settings.local.json` | Yerel kullanıcı ayarları |
 
-## Hassas Veri Taramasi: ✅ TEMIZ
+## Hassas Veri Taraması: ✅ TEMİZ
 
-- `.env` dosyasi: YOK
-- Sertifika dosyalari (`.pfx`, `.key`, `.pem`): YOK
+- `.env` dosyası: YOK
+- Sertifika dosyaları (`.pfx`, `.key`, `.pem`): YOK
 - `credentials.json` / `secrets.json`: YOK
 - Kodda hardcoded API key / password / token: YOK
-- `GITHUB_TOKEN`: Yalnizca `${{ secrets.GITHUB_TOKEN }}` referansi (guvenli)
+- `GITHUB_TOKEN`: Yalnızca `${{ secrets.GITHUB_TOKEN }}` referansı (güvenli)
 
-## Push Oncesi Son Kontrol Listesi
+## Push Öncesi Son Kontrol Listesi
 
 ```
-[✓] .gitignore guncellendi — bin/, archive/, installer/output/ engelleniyor
-[✓] Hassas dosya taramasi — temiz
+[✓] .gitignore güncellendi — bin/, archive/, installer/output/ engelleniyor
+[✓] Hassas dosya taraması — temiz
 [✓] .claude/settings.local.json — gitignore'da + untrack edilecek
-[✓] EXE dosyalari — git'e GIRMEYECEK (gitignore engelliyor)
-[✓] Test ciktilari — gitignore engelliyor
-[✓] Kaynak kodda sifre/token — yok
-[✓] Remote dogru mu — origin: github.com/erdiyim/SistemBakim.git ✓
-[✓] Branch dogru mu — main ✓
+[✓] EXE dosyaları — git'e GİRMEYECEK (gitignore engelliyor)
+[✓] Test çıktıları — gitignore engelliyor
+[✓] Kaynak kodda şifre/token — yok
+[✓] Remote doğru mu — origin: github.com/erdiyim/SistemBakim.git ✓
+[✓] Branch doğru mu — main ✓
 ```
 
 ---
 
-# 2. Epic Commit Mesaji
+# 2. Epic Commit Mesajı
 
 ```
 build(release): ship SistemBakim v5.0.0 — 69 modules, full ecosystem
@@ -67,7 +67,7 @@ Infrastructure:
 - GitHub Actions CI/CD (tag push → build → release)
 - Inno Setup 6 professional installer (Turkish + English)
 - Structured issue templates (Bug Report + Feature Request)
-- GitHub Sponsors / Ko-fi funding configuration
+- GitHub Sponsors funding configuration
 
 Documentation & Launch Assets:
 - Dual EN/TR README with SmartScreen guidance and roadmap
@@ -85,26 +85,26 @@ Restructured project layout: root files → src/ directory.
 
 ---
 
-# 3. Terminal Komutlari (Sirayla Calistir)
+# 3. Terminal Komutları (Sırayla Çalıştır)
 
-> Her komutu tek tek kopyala-yapistir.
-> Hata olmadgindan emin ol, sonra bir sonrakine gec.
+> Her komutu tek tek kopyala-yapıştır.
+> Hata olmadığından emin ol, sonra bir sonrakine geç.
 
 ---
 
-### ADIM 1: Claude Code yerel ayar dosyasini git takibinden cikar
+### ADIM 1: Claude Code yerel ayar dosyasını git takibinden çıkar
 
 ```powershell
 cd C:\Users\Erdi\Desktop\SistemBakim
 git rm --cached .claude/settings.local.json
 ```
 
-> Bu komut dosyayi SILMEZ, sadece git'in takibini birakir.
-> .gitignore zaten bu dosyayi engelliyor — bir daha tracked olmayacak.
+> Bu komut dosyayı SİLMEZ, sadece git'in takibini bırakır.
+> .gitignore zaten bu dosyayı engelliyor — bir daha tracked olmayacak.
 
 ---
 
-### ADIM 2: Tum dosyalari sahneye al
+### ADIM 2: Tüm dosyaları sahneye al
 
 ```powershell
 git add .gitignore
@@ -118,33 +118,33 @@ git add src/
 git add tests/_FeatureTest.ps1
 ```
 
-> `git add -A` yerine dosya bazli ekleme — ne girdigini biliyorsun.
+> `git add -A` yerine dosya bazlı ekleme — ne girdiğini biliyorsun.
 > Silinen root-level dosyalar (Build-EXE.ps1, *.exe vb.) otomatik handle edilir.
 
 ---
 
-### ADIM 3: Silinen eski dosyalari sahneye al
+### ADIM 3: Silinen eski dosyaları sahneye al
 
 ```powershell
 git add -u
 ```
 
-> `-u` flag'i: tracked dosyalardaki degisiklikleri ve silmeleri sahneye alir.
-> Yeni (untracked) dosyalar ETKILENMEZ — onlari zaten Adim 2'de ekledik.
+> `-u` flag'ı: tracked dosyalardaki değişiklikleri ve silmeleri sahneye alır.
+> Yeni (untracked) dosyalar ETKİLENMEZ — onları zaten Adım 2'de ekledik.
 
 ---
 
-### ADIM 4: Sahneyi dogrula (COMMIT ONCESI SON KONTROL)
+### ADIM 4: Sahneyi doğrula (COMMİT ÖNCESİ SON KONTROL)
 
 ```powershell
 git status
 ```
 
 > Kontrol et:
-> ✅ "Changes to be committed" altinda tum dosyalar gorunmeli
-> ✅ bin/, archive/, installer/output/ GOZUKMEMELI
-> ✅ .claude/settings.local.json "deleted" olarak gorunmeli (untrack)
-> ❌ Beklenmeyen bir dosya varsa: `git reset HEAD <dosya>` ile cikar
+> ✅ "Changes to be committed" altında tüm dosyalar görünmeli
+> ✅ bin/, archive/, installer/output/ GÖZÜKMEMELİ
+> ✅ .claude/settings.local.json "deleted" olarak görünmeli (untrack)
+> ❌ Beklenmeyen bir dosya varsa: `git reset HEAD <dosya>` ile çıkar
 
 ---
 
@@ -167,7 +167,7 @@ Infrastructure:
 - GitHub Actions CI/CD (tag push -> build -> release)
 - Inno Setup 6 professional installer (Turkish + English)
 - Structured issue templates (Bug Report + Feature Request)
-- GitHub Sponsors / Ko-fi funding configuration
+- GitHub Sponsors funding configuration
 
 Documentation and Launch Assets:
 - Dual EN/TR README with SmartScreen guidance and roadmap
@@ -185,7 +185,7 @@ Restructured project layout: root files moved to src/ directory."
 
 ---
 
-### ADIM 6: v5.0.0 etiketini olustur
+### ADIM 6: v5.0.0 etiketini oluştur
 
 ```powershell
 git tag -a v5.0.0 -m "SistemBakim v5.0.0 — The Ultimate Release
@@ -196,8 +196,8 @@ Full CI/CD pipeline. Professional installer. Complete documentation.
 Your PC. Fully Optimized."
 ```
 
-> `-a` flag'i: annotated tag (imzali, tarihli, aciklamali — lightweight degil).
-> GitHub Releases sayfasinda bu mesaj gorunecek.
+> `-a` flag'ı: annotated tag (imzalı, tarihli, açıklamalı — lightweight değil).
+> GitHub Releases sayfasında bu mesaj görünecek.
 
 ---
 
@@ -211,16 +211,16 @@ git push origin main
 git push origin v5.0.0
 ```
 
-> Iki ayri komut — once kod, sonra tag.
-> Tag push'u GitHub Actions CI/CD pipeline'ini TETIKLEYECEK.
+> İki ayrı komut — önce kod, sonra tag.
+> Tag push'u GitHub Actions CI/CD pipeline'ını TETİKLEYECEK.
 > Pipeline otomatik olarak:
 >   1. ps2exe ile EXE derleyecek
->   2. Inno Setup ile installer olusturacak
->   3. GitHub Release sayfasina 3 EXE yukleyecek
+>   2. Inno Setup ile installer oluşturacak
+>   3. GitHub Release sayfasına 3 EXE yükleyecek
 
 ---
 
-### ADIM 8: Dogrulama
+### ADIM 8: Doğrulama
 
 ```powershell
 git status
@@ -230,26 +230,26 @@ git tag -l
 
 > Kontrol et:
 > ✅ "nothing to commit, working tree clean"
-> ✅ Son commit mesaji gorunuyor
-> ✅ v5.0.0 tag'i listeleniyor
+> ✅ Son commit mesajı görünüyor
+> ✅ v5.0.0 tag'ı listeleniyor
 
 ---
 
-## Push Sonrasi GitHub Kontrolleri
+## Push Sonrası GitHub Kontrolleri
 
 ```
-[ ] github.com/erdiyim/SistemBakim → Repo gorunuyor mu?
-[ ] Actions tab → CI/CD pipeline baslamis mi?
-[ ] Releases tab → v5.0.0 draft/release olusmus mu?
-[ ] Issues tab → Bug Report + Feature Request sablonlari gorunuyor mu?
-[ ] Sponsor butonu gorunuyor mu? (FUNDING.yml)
-[ ] Settings → Pages → docs/ source secili mi? (Landing Page icin)
+[ ] github.com/erdiyim/SistemBakim → Repo görünüyor mu?
+[ ] Actions tab → CI/CD pipeline başlamış mı?
+[ ] Releases tab → v5.0.0 draft/release oluşmuş mu?
+[ ] Issues tab → Bug Report + Feature Request şablonları görünüyor mu?
+[ ] Sponsor butonu görünüyor mu? (FUNDING.yml)
+[ ] Settings → Pages → docs/ source seçili mi? (Landing Page için)
 ```
 
 ---
 
 <div align="center">
 
-**Kirmizi butona bas. Ship it.** 🚀
+**Kırmızı butona bas. Ship it.**
 
 </div>

@@ -2,259 +2,259 @@
 
 # SistemBakim — Issue Triage & Prioritization Guide
 
-### Solo Gelistirici Icin Hata Onceliklendirme Rehberi
+### Solo Geliştirici İçin Hata Önceliklendirme Rehberi
 
-*Her bug esit degildir. Bu rehber hangisi icin uykunu bozacagini, hangisini v5.1'e birakacagini soyler.*
+*Her bug eşit değildir. Bu rehber hangisi için uykunu bozacağını, hangisini v5.1'e bırakacağını söyler.*
 
 </div>
 
 ---
 
-## Altin Kural
+## Altın Kural
 
-> **Kural #1:** Kullanicinin sistemini BOZAN veya VERI KAYBINA yol acan her sey P0'dir.
-> **Kural #2:** Kullanicinin SistemBakim'i KULLANMASINI ENGELLEYEN her sey P1'dir.
-> **Kural #3:** Geri kalan her sey bekleyebilir.
+> **Kural #1:** Kullanıcının sistemini BOZAN veya VERİ KAYBINA yol açan her şey P0'dır.
+> **Kural #2:** Kullanıcının SistemBakim'i KULLANMASINI ENGELLEYEN her şey P1'dir.
+> **Kural #3:** Geri kalan her şey bekleyebilir.
 
 ---
 
-## Oncelik Seviyeleri
+## Öncelik Seviyeleri
 
-### P0 — KRITIK (Uykunu Boz, Simdi Fix'le)
+### P0 — KRİTİK (Uykunu Boz, Şimdi Fix'le)
 
-**Hedef sure:** 2-4 saat icinde hotfix release
+**Hedef süre:** 2-4 saat içinde hotfix release
 
-**Tanimlama:** Asagidakilerden BIR TANESI bile gecerliyse P0'dir:
+**Tanımlama:** Aşağıdakilerden BİR TANESİ bile geçerliyse P0'dır:
 
-| Belirti | Ornek |
+| Belirti | Örnek |
 |---------|-------|
-| Uygulama BSOD'a neden oluyor | Korunan servis listesinde olmayan bir kritik servisin kapatilmasi |
-| Veri kaybi | Dosya Kirpici yanlis dosyayi siliyor, Registry temizleyici olmamasi gereken bir seyi siliyor |
-| Yedek mekanizmasi calismıyor | `.reg` dosyasi olusturulmuyor, JSON yedek bos |
-| Korunan servislerin devre disi kalabilmesi | `$korunanlar` listesindeki bir servisin profil tarafindan degistirilebilmesi |
-| Uygulama hic acilmiyor (widespread) | Birden fazla kullanici ayni crash'i bildiriyor |
+| Uygulama BSOD'a neden oluyor | Korunan servis listesinde olmayan bir kritik servisin kapatılması |
+| Veri kaybı | Dosya Kırpıcı yanlış dosyayı siliyor, Registry temizleyici olmaması gereken bir şeyi siliyor |
+| Yedek mekanizması çalışmıyor | `.reg` dosyası oluşturulmuyor, JSON yedek boş |
+| Korunan servislerin devre dışı kalabilmesi | `$korunanlar` listesindeki bir servisin profil tarafından değiştirilebilmesi |
+| Uygulama hiç açılmıyor (widespread) | Birden fazla kullanıcı aynı crash'i bildiriyor |
 
-**Eylem plani:**
+**Eylem planı:**
 ```
-1. Issue'ya "P0-critical" + "bug" label'i ekle
+1. Issue'ya "P0-critical" + "bug" label'ı ekle
 2. Hemen reproduce et (Win10 + Win11)
 3. Fix yap → Lokal test → Commit
 4. git tag v5.0.X && git push origin v5.0.X
 5. CI/CD otomatik build + release
-6. Issue'ya yanit: "Fixed in v5.0.X — please update and confirm"
-7. Reddit/PH'de guncelleme yorumu yaz (varsa)
+6. Issue'ya yanıt: "Fixed in v5.0.X — please update and confirm"
+7. Reddit/PH'de güncelleme yorumu yaz (varsa)
 ```
 
 **Asla yapma:**
-- Issue'yu "investigate later" diye birakma
-- Fix'i birden fazla degisiklikle bundle etme — tek fix, tek release
+- Issue'yu "investigate later" diye bırakma
+- Fix'i birden fazla değişiklikle bundle etme — tek fix, tek release
 
 ---
 
-### P1 — YUKSEK (Bugun veya Yarin Fix'le)
+### P1 — YÜKSEK (Bugün veya Yarın Fix'le)
 
-**Hedef sure:** 24-48 saat
+**Hedef süre:** 24-48 saat
 
-**Tanimlama:**
+**Tanımlama:**
 
-| Belirti | Ornek |
+| Belirti | Örnek |
 |---------|-------|
-| Belirli bir modul tamamen calismıyor | DNS Benchmark hic DNS sorgusu yapmiyor |
-| Modul yanlis sonuc uretyor ama zarar vermiyor | RAM Optimizer "-500 MB" yerine "+500 MB" gostruyor |
-| Geri alma mekanizmasi calisiyor ama eksik | FPS Optimizer 11 tweak'ten 9'unu geri aliyor, 2'sini atliyor |
-| Belirli bir Windows surumunde crash | Win11 24H2'de Treemap acilirken hata |
-| GUI donuyor ama cokmuyor | DispatcherTimer thread bloklama sorunu |
+| Belirli bir modül tamamen çalışmıyor | DNS Benchmark hiç DNS sorgusu yapmıyor |
+| Modül yanlış sonuç üretiyor ama zarar vermiyor | RAM Optimizer "-500 MB" yerine "+500 MB" gösteriyor |
+| Geri alma mekanizması çalışıyor ama eksik | FPS Optimizer 11 tweak'ten 9'unu geri alıyor, 2'sini atlıyor |
+| Belirli bir Windows sürümünde crash | Win11 24H2'de Treemap açılırken hata |
+| GUI donuyor ama çökmüyor | DispatcherTimer thread bloklama sorunu |
 
-**Eylem plani:**
+**Eylem planı:**
 ```
-1. Issue'ya "P1-high" + "bug" label'i ekle
-2. Kullanicidan ek bilgi iste (Windows surumu, log ciktisi)
+1. Issue'ya "P1-high" + "bug" label'ı ekle
+2. Kullanıcıdan ek bilgi iste (Windows sürümü, log çıktısı)
 3. Reproduce et → root cause bul
-4. Gun icinde veya ertesi gun fix yap
+4. Gün içinde veya ertesi gün fix yap
 5. Bir sonraki hotfix batch'ine dahil et (v5.0.X)
 6. Issue'ya: "Fix is ready, will be in the next patch release"
 ```
 
 ---
 
-### P2 — ORTA (Bu Hafta veya v5.1'e Birak)
+### P2 — ORTA (Bu Hafta veya v5.1'e Bırak)
 
-**Hedef sure:** 1 hafta veya sonraki minor release
+**Hedef süre:** 1 hafta veya sonraki minor release
 
-**Tanimlama:**
+**Tanımlama:**
 
-| Belirti | Ornek |
+| Belirti | Örnek |
 |---------|-------|
-| Modul calisiyor ama UX kotu | Temizlik modulu tamamlanma yuzdesini gostermiyor |
-| Kucuk hesaplama hatasi | Disk Analizi 1-2 MB yanlis gosteriyor |
-| Edge case handling eksik | Bos Klasor Bulucu junction/symlink'lerde hata |
-| Log/rapor formatlama sorunu | HTML Dashboard'da Turkce karakter bozuk |
-| Performans iyilestirmesi | WinSxS temizligi 20dk suruyor, 10dk'ya indirilebilir |
+| Modül çalışıyor ama UX kötü | Temizlik modülü tamamlanma yüzdesini göstermiyor |
+| Küçük hesaplama hatası | Disk Analizi 1-2 MB yanlış gösteriyor |
+| Edge case handling eksik | Boş Klasör Bulucu junction/symlink'lerde hata |
+| Log/rapor formatlama sorunu | HTML Dashboard'da Türkçe karakter bozuk |
+| Performans iyileştirmesi | WinSxS temizliği 20dk sürüyor, 10dk'ya indirilebilir |
 
-**Eylem plani:**
+**Eylem planı:**
 ```
-1. Issue'ya "P2-medium" + "bug" label'i ekle
+1. Issue'ya "P2-medium" + "bug" label'ı ekle
 2. "v5.1" milestone'una ata
-3. Kullaniciya: "Tracked for v5.1 — thanks for reporting!"
-4. Haftalik code session'da toplu fix yap
+3. Kullanıcıya: "Tracked for v5.1 — thanks for reporting!"
+4. Haftalık code session'da toplu fix yap
 ```
 
 ---
 
-### P3 — DUSUK (v5.1 veya Sonrasi)
+### P3 — DÜŞÜK (v5.1 veya Sonrası)
 
-**Hedef sure:** Sonraki minor/major release
+**Hedef süre:** Sonraki minor/major release
 
-**Tanimlama:**
+**Tanımlama:**
 
-| Belirti | Ornek |
+| Belirti | Örnek |
 |---------|-------|
-| Kozmetik / gorsel sorun | Buton hizalama kayik, font boyutu tutarsız |
-| "Nice to have" iyilestirme | "Temizlik sirasinda ses cikarsa guzel olur" |
-| Dokumantasyon hatasi | MODULES.md'de yanlis satir numarasi referansi |
-| Nadiren tetiklenen edge case | Sadece Almanca Windows'ta olusn bir sorun |
-| Eski OS uyumluluk | Win10 1903'te calismıyor (EOL surumler) |
+| Kozmetik / görsel sorun | Buton hizalama kayık, font boyutu tutarsız |
+| "Nice to have" iyileştirme | "Temizlik sırasında ses çıkarsa güzel olur" |
+| Dokümantasyon hatası | MODULES.md'de yanlış satır numarası referansı |
+| Nadiren tetiklenen edge case | Sadece Almanca Windows'ta oluşan bir sorun |
+| Eski OS uyumluluk | Win10 1903'te çalışmıyor (EOL sürümler) |
 
-**Eylem plani:**
+**Eylem planı:**
 ```
-1. Issue'ya "P3-low" + ilgili label'i ekle
+1. Issue'ya "P3-low" + ilgili label'ı ekle
 2. "backlog" milestone'una ata
-3. Kullaniciya: "Noted — added to backlog for a future release"
-4. Zaman buldukca veya PR gelirse fix'le
+3. Kullanıcıya: "Noted — added to backlog for a future release"
+4. Zaman buldukça veya PR gelirse fix'le
 ```
 
 ---
 
 ## GitHub Label Sistemi
 
-### Olusturulacak Label'lar
+### Oluşturulacak Label'lar
 
 ```
-Oncelik (Renk: kirmizi → yesil):
-  P0-critical     #D73A4A   Sistem bozulma / veri kaybi riski
-  P1-high         #E99695   Modul calismıyor / yanlis sonuc
-  P2-medium       #FBCA04   Kucuk hata / iyilestirme
+Öncelik (Renk: kırmızı → yeşil):
+  P0-critical     #D73A4A   Sistem bozulma / veri kaybı riski
+  P1-high         #E99695   Modül çalışmıyor / yanlış sonuç
+  P2-medium       #FBCA04   Küçük hata / iyileştirme
   P3-low          #0E8A16   Kozmetik / edge case
 
-Tur:
+Tür:
   bug             #D73A4A   Hata bildirimi
-  enhancement     #A2EEEF   Ozellik istegi
+  enhancement     #A2EEEF   Özellik isteği
   question        #D876E3   Soru / destek
-  documentation   #0075CA   Dokumantasyon
+  documentation   #0075CA   Dokümantasyon
   duplicate       #CFD3D7   Tekrar eden issue
-  wontfix         #FFFFFF   Duzeltilmeyecek (tasarim karari)
+  wontfix         #FFFFFF   Düzeltilmeyecek (tasarım kararı)
 
 Durum:
-  triage          #FBCA04   Henuz degerlendirilmedi
+  triage          #FBCA04   Henüz değerlendirilmedi
   confirmed       #0E8A16   Tekrarlanabilir, fix planlanıyor
-  needs-info      #D876E3   Kullanicidan ek bilgi bekleniyor
-  in-progress     #1D76DB   Uzerinde calisilıyor
+  needs-info      #D876E3   Kullanıcıdan ek bilgi bekleniyor
+  in-progress     #1D76DB   Üzerinde çalışılıyor
 
-Modul:
-  mod-temizlik    #60A5FA   Temizlik & Disk modulleri
-  mod-sistem      #34D399   Sistem modulleri
-  mod-guvenlik    #F87171   Guvenlik modulleri
-  mod-ag          #38BDF8   Ag & Internet modulleri
-  mod-oyun        #C084FC   Oyun & Performans modulleri
-  mod-gui         #F472B6   GUI / arayuz sorunlari
+Modül:
+  mod-temizlik    #60A5FA   Temizlik & Disk modülleri
+  mod-sistem      #34D399   Sistem modülleri
+  mod-guvenlik    #F87171   Güvenlik modülleri
+  mod-ag          #38BDF8   Ağ & İnternet modülleri
+  mod-oyun        #C084FC   Oyun & Performans modülleri
+  mod-gui         #F472B6   GUI / arayüz sorunları
 
 Milestone:
   v5.0.x          Hotfix release'ler
   v5.1            Sonraki minor release
-  backlog         Gelecek surumler
+  backlog         Gelecek sürümler
 ```
 
 ---
 
-## Gunluk Triage Rutini (10 Dakika)
+## Günlük Triage Rutini (10 Dakika)
 
-> Her gun sabah veya aksam 10 dk ayir. Daha fazlasi gerekmiyor.
+> Her gün sabah veya akşam 10 dk ayır. Daha fazlası gerekmiyor.
 
 ```
-ADIM 1: Yeni issue'lari tara (2 dk)
+ADIM 1: Yeni issue'ları tara (2 dk)
   → GitHub → Issues → label:triage sort:created-desc
   → Her birini oku, ilk izlenimi belirle
 
 ADIM 2: Label'la (3 dk)
-  → Oncelik: P0/P1/P2/P3
-  → Tur: bug / enhancement / question
-  → Modul: hangi modul etkilenmis
+  → Öncelik: P0/P1/P2/P3
+  → Tür: bug / enhancement / question
+  → Modül: hangi modül etkilenmiş
   → Durum: confirmed / needs-info
 
-ADIM 3: Hizli yanit (3 dk)
-  → P0: Hemen calismaya basla (triage'i birak)
+ADIM 3: Hızlı yanıt (3 dk)
+  → P0: Hemen çalışmaya başla (triage'ı bırak)
   → P1: "I can reproduce this, working on a fix"
   → P2: "Tracked for v5.1 — thanks!"
   → P3: "Added to backlog"
-  → needs-info: FAQ_RESPONSES.md'den uygun sablonu yapistir
+  → needs-info: FAQ_RESPONSES.md'den uygun şablonu yapıştır
 
 ADIM 4: Stale issue kontrol (2 dk)
-  → 14+ gun needs-info'da yanit gelmemis → "Closing due to inactivity. 
+  → 14+ gün needs-info'da yanıt gelmemiş → "Closing due to inactivity. 
      Feel free to reopen if the issue persists."
-  → 30+ gun P3'te → Hala gecerli mi? Degilse kapat.
+  → 30+ gün P3'te → Hâlâ geçerli mi? Değilse kapat.
 ```
 
 ---
 
-## Karar Agaci (Issue Geldiginde)
+## Karar Ağacı (Issue Geldiğinde)
 
 ```
 Yeni Issue Geldi
 │
-├── Crash / BSOD / Veri Kaybi mi?
-│   ├── EVET → P0 → SIMDI fix'le
+├── Crash / BSOD / Veri Kaybı mı?
+│   ├── EVET → P0 → ŞİMDİ fix'le
 │   └── HAYIR ↓
 │
-├── Modul tamamen calismıyor mu?
+├── Modül tamamen çalışmıyor mu?
 │   ├── EVET → P1 → 24-48 saat
 │   └── HAYIR ↓
 │
-├── Yanlis sonuc ama zarar yok mu?
+├── Yanlış sonuç ama zarar yok mu?
 │   ├── EVET → P2 → Bu hafta veya v5.1
 │   └── HAYIR ↓
 │
-├── Kozmetik / edge case / dokumantasyon mu?
+├── Kozmetik / edge case / dokümantasyon mu?
 │   ├── EVET → P3 → Backlog
 │   └── HAYIR ↓
 │
-├── Ozellik istegi mi?
+├── Özellik isteği mi?
 │   ├── EVET → "enhancement" label → v5.1 milestone
 │   └── HAYIR ↓
 │
 ├── Soru mu?
-│   ├── EVET → FAQ yaniti yapistir → Kapat (veya Discussions'a yonlendir)
+│   ├── EVET → FAQ yanıtı yapıştır → Kapat (veya Discussions'a yönlendir)
 │   └── HAYIR ↓
 │
-└── Anlasilmiyor → "needs-info" label → Soru sor → 14 gun bekle
+└── Anlaşılmıyor → "needs-info" label → Soru sor → 14 gün bekle
 ```
 
 ---
 
-## Solo Gelistirici Icin Zihinsel Saglik Kurallari
+## Solo Geliştirici İçin Zihinsel Sağlık Kuralları
 
 ```
-1. Her bug'i hemen fix'lemek ZORUNDA degilsin.
-   P0 disinda her sey BEKLEYEBILIR.
+1. Her bug'ı hemen fix'lemek ZORUNDA değilsin.
+   P0 dışında her şey BEKLEYEBİLİR.
 
-2. Her ozellik istegine "evet" deme.
+2. Her özellik isteğine "evet" deme.
    "Great idea — tracked for future consideration" yeterli.
 
-3. Toksik yorumlari kisisel alma.
+3. Toksik yorumları kişisel alma.
    Kibar ama kesin ol: "I appreciate the feedback. If you'd like 
    to help, PRs are welcome."
 
-4. Haftada 1 gun HICBIR issue'ya bakma.
-   Burnout en buyuk dusmanin — kodun degil.
+4. Haftada 1 gün HİÇBİR issue'ya bakma.
+   Burnout en büyük düşmanın — kodun değil.
 
-5. Metriklere takilma.
-   10 mutlu kullanici, 1000 yildizdan daha degerlidir.
+5. Metriklere takılma.
+   10 mutlu kullanıcı, 1000 yıldızdan daha değerlidir.
 ```
 
 ---
 
 <div align="center">
 
-*Bu rehber sabit degil — deneyimle guncelle. Ilk 2 hafta sana en cok
-hangi tur issue geldigini izle ve triage rutinini buna gore ayarla.*
+*Bu rehber sabit değil — deneyimle güncelle. İlk 2 hafta sana en çok
+hangi tür issue geldiğini izle ve triage rutinini buna göre ayarla.*
 
 </div>

@@ -8,14 +8,14 @@
 
 **69 Modules** · **WPF Dark UI** · **Zero Dependencies** · **Single EXE**
 
-[![Release](https://img.shields.io/badge/release-v5.0-7C5CFC?style=for-the-badge)](https://github.com/erdi/SistemBakim/releases)
-[![Downloads](https://img.shields.io/github/downloads/erdi/SistemBakim/total?style=for-the-badge&color=7C5CFC&label=Downloads)](https://github.com/erdi/SistemBakim/releases)
-[![Stars](https://img.shields.io/github/stars/erdi/SistemBakim?style=for-the-badge&color=34D399)](https://github.com/erdi/SistemBakim)
+[![Release](https://img.shields.io/badge/release-v5.0-7C5CFC?style=for-the-badge)](https://github.com/erdiyim/SistemBakim/releases)
+[![Downloads](https://img.shields.io/github/downloads/erdiyim/SistemBakim/total?style=for-the-badge&color=7C5CFC&label=Downloads)](https://github.com/erdiyim/SistemBakim/releases)
+[![Stars](https://img.shields.io/github/stars/erdiyim/SistemBakim?style=for-the-badge&color=34D399)](https://github.com/erdiyim/SistemBakim)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=for-the-badge&logo=windows)](https://microsoft.com)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1+-5391FE?style=for-the-badge&logo=powershell&logoColor=white)](https://docs.microsoft.com/powershell)
 [![License](https://img.shields.io/badge/license-Personal%20Use-34D399?style=for-the-badge)](LICENSE)
 
-[**Download Setup**](https://github.com/erdi/SistemBakim/releases/latest) · [Turkce](#-turkce) · [Features](#-features) · [Install](#-installation) · [Architecture](#-architecture)
+[**Download Setup**](https://github.com/erdiyim/SistemBakim/releases/latest) · [Turkce](#-turkce) · [Features](#-features) · [Install](#-installation) · [Architecture](#-architecture)
 
 ---
 
@@ -91,7 +91,7 @@ Most system optimizers are either bloated subscription traps or shallow registry
 
 ### Option A: Setup Installer (Recommended)
 
-1. Download **`SistemBakim_v5.0_Setup.exe`** from [Releases](https://github.com/erdi/SistemBakim/releases/latest)
+1. Download **`SistemBakim_v5.0_Setup.exe`** from [Releases](https://github.com/erdiyim/SistemBakim/releases/latest)
 2. Run the installer — it will request administrator privileges
 3. Choose install directory (default: `C:\Program Files\SistemBakim\`)
 4. Desktop and Start Menu shortcuts are created automatically
@@ -198,7 +198,7 @@ PowerShell 5.1 Backend (8900+ lines, 69 modules)
 Install-Module ps2exe -Scope CurrentUser
 
 # Clone and build
-git clone https://github.com/erdi/SistemBakim.git
+git clone https://github.com/erdiyim/SistemBakim.git
 cd SistemBakim/src
 echo "" | powershell -NoProfile -ExecutionPolicy Bypass -File "Build-EXE.ps1"
 
@@ -227,7 +227,7 @@ SistemBakim is actively developed. Here's what's coming next:
 - **CLI Automation Mode** — `SistemBakim_CLI.exe --run 3,26,60 --auto` for scripted maintenance
 - **Plugin System** — Community-contributed modules loaded from a `plugins/` directory
 
-> Have an idea? [Open a Feature Request](https://github.com/erdi/SistemBakim/issues/new?template=feature_request.yml) — your suggestions built v5.0, and they'll build v5.1 too.
+> Have an idea? [Open a Feature Request](https://github.com/erdiyim/SistemBakim/issues/new?template=feature_request.yml) — your suggestions built v5.0, and they'll build v5.1 too.
 
 ---
 
@@ -250,50 +250,50 @@ Personal and non-commercial use is free. See [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-## Turkce
+## Türkçe
 
 </div>
 
 ## SistemBakim Nedir?
 
-SistemBakim, Windows 10/11 icin gelistirilmis **69 modulluk** bir sistem bakim, temizlik, optimizasyon ve guvenlik aracidir. Tek bir EXE dosyasi olarak calisir, hicbir bagimliligi yoktur.
+SistemBakim, Windows 10/11 için geliştirilmiş **69 modüllük** bir sistem bakım, temizlik, optimizasyon ve güvenlik aracıdır. Tek bir EXE dosyası olarak çalışır, hiçbir bağımlılığı yoktur.
 
-### Temel Ozellikler
+### Temel Özellikler
 
-- **Derin Temizlik** — 19 farkli konumda temp, cache, log ve gereksiz dosya temizligi
-- **Registry Temizleyici** — Kirik program girislerini, gecersiz DLL referanslarini tarar, .reg yedegi alir
-- **FPS Optimizasyonu** — GameDVR, MMCSS, Nagle, HAGS dahil 11 farkli oyun tweaki (geri alinabilir)
-- **Gizlilik Kalkani** — 25 Windows gizlilik ayarini tek tikla yonet
-- **Turbo Boost** — RAM temizle + surec kapat + guc plani yukselt + efekt kapat = aninda performans
-- **Disk Haritasi** — WinDirStat benzeri gorsel blok harita, uygulamanin icinde
-- **Dosya Kirpici** — 3 gecisli guvenli silme (rastgele-sifir-rastgele)
-- **Ag Monitoru** — Canli bant genisligi olcumu ve uygulama bazli ag tuketimi
-- **Hizmet Konfiguratoru** — Oyun / Is / Gunluk profilleriyle Windows servislerini toplu optimize et
-- **Tema Destegi** — Koyu ve acik mod arasinda gecis
-- **Oncesi/Sonrasi Karsilastirma** — Her islem sonrasi disk ve RAM fark gostergesi
-- **Disa Aktarma** — HTML + TXT rapor olusturma
+- **Derin Temizlik** — 19 farklı konumda temp, cache, log ve gereksiz dosya temizliği
+- **Registry Temizleyici** — Kırık program girişlerini, geçersiz DLL referanslarını tarar, .reg yedeği alır
+- **FPS Optimizasyonu** — GameDVR, MMCSS, Nagle, HAGS dahil 11 farklı oyun tweakı (geri alınabilir)
+- **Gizlilik Kalkanı** — 25 Windows gizlilik ayarını tek tıkla yönet
+- **Turbo Boost** — RAM temizle + süreç kapat + güç planı yükselt + efekt kapat = anında performans
+- **Disk Haritası** — WinDirStat benzeri görsel blok harita, uygulamanın içinde
+- **Dosya Kırpıcı** — 3 geçişli güvenli silme (rastgele-sıfır-rastgele)
+- **Ağ Monitörü** — Canlı bant genişliği ölçümü ve uygulama bazlı ağ tüketimi
+- **Hizmet Yapılandırıcısı** — Oyun / İş / Günlük profilleriyle Windows servislerini toplu optimize et
+- **Tema Desteği** — Koyu ve açık mod arasında geçiş
+- **Öncesi/Sonrası Karşılaştırma** — Her işlem sonrası disk ve RAM fark göstergesi
+- **Dışa Aktarma** — HTML + TXT rapor oluşturma
 
-### Nasil Kurulur?
+### Nasıl Kurulur?
 
-1. [Releases](https://github.com/erdi/SistemBakim/releases/latest) sayfasindan **SistemBakim_v5.0_Setup.exe** indirin
-2. Kurulum sihirbazini calistirin (yonetici yetkisi isteyecektir)
-3. Masaustu kisayolundan uygulamayi baslatip keyfini cikarin
+1. [Releases](https://github.com/erdiyim/SistemBakim/releases/latest) sayfasından **SistemBakim_v5.0_Setup.exe** indirin
+2. Kurulum sihirbazını çalıştırın (yönetici yetkisi isteyecektir)
+3. Masaüstü kısayolundan uygulamayı başlatıp keyfini çıkarın
 
 ### Gereksinimler
 
 - Windows 10 veya 11 (64-bit)
-- Yonetici yetkisi
+- Yönetici yetkisi
 - Ek kurulum gerekmez
 
-### Yol Haritasi (Roadmap)
+### Yol Haritası (Roadmap)
 
-| Ozellik | Durum | Aciklama |
+| Özellik | Durum | Açıklama |
 |---------|-------|----------|
-| **Otomatik Guncelleyici** | 🔬 Arastirma | Uygulama icinden tek tikla guncelleme |
-| **Ingilizce Arayuz** | 📋 Planlandi | Tum UI metinleri Ingilizce secenegi |
-| **Ping Analizoru** | 📋 Planlandi | Canli ping grafigi, jitter ve paket kaybi olcumu |
+| **Otomatik Güncelleyici** | 🔬 Araştırma | Uygulama içinden tek tıkla güncelleme |
+| **İngilizce Arayüz** | 📋 Planlandı | Tüm UI metinleri İngilizce seçeneği |
+| **Ping Analizörü** | 📋 Planlandı | Canlı ping grafiği, jitter ve paket kaybı ölçümü |
 
-> Fikriniz mi var? [Ozellik Istegi acin](https://github.com/erdi/SistemBakim/issues/new?template=feature_request.yml) — v5.0'daki her ozellik sizin gibi kullanicilarin onerileriyle olusturuldu.
+> Fikriniz mi var? [Özellik İsteği açın](https://github.com/erdiyim/SistemBakim/issues/new?template=feature_request.yml) — v5.0'daki her özellik sizin gibi kullanıcıların önerileriyle oluşturuldu.
 
 ---
 
@@ -310,26 +310,26 @@ But building and maintaining 69 modules, testing across Windows versions, and ke
 - **Star this repo** — it's free and helps others discover the tool
 - **Report bugs** — well-written bug reports are incredibly valuable ([Bug Report template](.github/ISSUE_TEMPLATE/bug_report.yml))
 - **Suggest features** — your ideas shape the roadmap ([Feature Request template](.github/ISSUE_TEMPLATE/feature_request.yml))
-- **Sponsor** — if you want to directly support development: [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/erdi) [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsor-EA4AAA?style=flat-square&logo=github-sponsors&logoColor=white)](https://github.com/sponsors/erdi)
+- **Sponsor** — if you want to directly support development: [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsor-EA4AAA?style=flat-square&logo=github-sponsors&logoColor=white)](https://github.com/sponsors/erdiyim)
 
 Every contribution — code, feedback, or coffee — keeps this project alive and independent.
 
 ---
 
-SistemBakim, her zaman **ucretsiz, acik kaynak ve reklamsiz** kalacak. Premium katman, "Pro" surumu veya gizli izleme yoktur. Bu bilinckli bir karar.
+SistemBakim, her zaman **ücretsiz, açık kaynak ve reklamsız** kalacak. Premium katman, "Pro" sürümü veya gizli izleme yoktur. Bu bilinçli bir karar.
 
-Ama 69 modulu gelistirmek, Windows surumleri arasinda test etmek ve guncel tutmak ciddi zaman aliyor. SistemBakim size zaman kazandirdiysa veya bilgisayarinizi hizlandirdiysa, projeye destek olabilirsiniz:
+Ama 69 modülü geliştirmek, Windows sürümleri arasında test etmek ve güncel tutmak ciddi zaman alıyor. SistemBakim size zaman kazandırdıysa veya bilgisayarınızı hızlandırdıysa, projeye destek olabilirsiniz:
 
-- **Yildiz verin** — ucretsiz ve kesfedilebilirlik icin onemli
-- **Hata bildirin** — iyi yazilmis hata raporlari cok degerli
-- **Ozellik onerin** — fikirleriniz yol haritasini sekillendiriyor
-- **Sponsor olun** — gelistirmeyi dogrudan desteklemek icin: [Ko-fi](https://ko-fi.com/erdi) veya [GitHub Sponsors](https://github.com/sponsors/erdi)
+- **Yıldız verin** — ücretsiz ve keşfedilebilirlik için önemli
+- **Hata bildirin** — iyi yazılmış hata raporları çok değerli
+- **Özellik önerin** — fikirleriniz yol haritasını şekillendiriyor
+- **Sponsor olun** — geliştirmeyi doğrudan desteklemek için: [GitHub Sponsors](https://github.com/sponsors/erdiyim)
 
 ---
 
 <div align="center">
 
-**Built with obsession by [Erdi](https://github.com/erdi) + [Claude](https://claude.ai)**
+**Built with obsession by [Erdi](https://github.com/erdiyim) + [Claude](https://claude.ai)**
 
 *If SistemBakim saved you time, consider giving it a star.*
 

@@ -2,32 +2,32 @@
 
 # SistemBakim — Ready-to-Use Response Templates
 
-### Kopyala-Yapistir Hazir Yanit Sablonlari
+### Kopyala-Yapıştır Hazır Yanıt Şablonları
 
-*Her yanit EN (English) ve TR (Turkce) olarak verilmistir.*
+*Her yanıt EN (English) ve TR (Türkçe) olarak verilmiştir.*
 
 </div>
 
 ---
 
-## Icindekiler
+## İçindekiler
 
-1. [SmartScreen / Virus Uyarisi](#1-smartscreen--virus-uyarisi)
+1. [SmartScreen / Virüs Uyarısı](#1-smartscreen--virüs-uyarısı)
 2. [Registry / Servis Bozuldu — Geri Alma](#2-registry--servis-bozuldu--geri-alma)
-3. [Ozellik Istegi / UI Onerisi](#3-ozellik-istegi--ui-onerisi)
-4. [Uygulama Acilmiyor / Crash](#4-uygulama-acilmiyor--crash)
-5. [Hangi Moduller Guvenli?](#5-hangi-moduller-guvenli)
-6. [Veri Toplaniyor mu / Telemetri](#6-veri-toplaniyor-mu--telemetri)
+3. [Özellik İsteği / UI Önerisi](#3-özellik-isteği--ui-önerisi)
+4. [Uygulama Açılmıyor / Crash](#4-uygulama-açılmıyor--crash)
+5. [Hangi Modüller Güvenli?](#5-hangi-modüller-güvenli)
+6. [Veri Toplanıyor mu / Telemetri](#6-veri-toplanıyor-mu--telemetri)
 7. [Win10 / Win11 Uyumluluk](#7-win10--win11-uyumluluk)
-8. [Tesekkur ve Yildiz Istegi](#8-tesekkur-ve-yildiz-istegi)
+8. [Teşekkür ve Yıldız İsteği](#8-teşekkür-ve-yıldız-isteği)
 9. [Duplicate / Tekrar Eden Issue](#9-duplicate--tekrar-eden-issue)
-10. [Dil Destegi / Ingilizce UI](#10-dil-destegi--ingilizce-ui)
+10. [Dil Desteği / İngilizce UI](#10-dil-desteği--ingilizce-ui)
 
 ---
 
-## 1. SmartScreen / Virus Uyarisi
+## 1. SmartScreen / Virüs Uyarısı
 
-> Kullanici: "SmartScreen uyari verdi, bu guvenli mi?" / "VirusTotal'da flag var!"
+> Kullanıcı: "SmartScreen uyarı verdi, bu güvenli mi?" / "VirusTotal'da flag var!"
 
 ### English
 
@@ -47,7 +47,7 @@ Here's why you can trust SistemBakim:
 ✅ Zero telemetry — no tracking, no analytics, no data collection
 ✅ Reproducible build — you can clone the repo and build from source yourself:
 
-   git clone https://github.com/erdi/SistemBakim.git
+   git clone https://github.com/erdiyim/SistemBakim.git
    cd SistemBakim/src
    echo "" | powershell -NoProfile -ExecutionPolicy Bypass -File "Build-EXE.ps1"
 
@@ -58,36 +58,36 @@ ps2exe-compiled PowerShell scripts. The major engines (Microsoft, Kaspersky, ESE
 Bitdefender) all report it as clean.
 ```
 
-### Turkce
+### Türkçe
 
 ```
-Sordugunuz icin tesekkurler — cok anlasilir bir endise!
+Sorduğunuz için teşekkürler — çok anlaşılır bir endişe!
 
-SmartScreen uyarisi, SistemBakim'in EV Code Signing Sertifikasi (yillik $400+) 
-olmadigi icin cikiyor. Ucretsiz ve acik kaynakli bir proje olarak bunu su an 
-karsilayamiyoruz. Bu uyari uygulamanin guvenligi ile HICBIR ilgisi yoktur — 
-sadece Microsoft'un bu dosyayi henuz yeterince "tanimadigi" anlamina gelir. 
-Rufus, Ventoy, HWiNFO gibi araclar da ayni uyariyi verir.
+SmartScreen uyarısı, SistemBakim'in EV Code Signing Sertifikası (yıllık $400+) 
+olmadığı için çıkıyor. Ücretsiz ve açık kaynaklı bir proje olarak bunu şu an 
+karşılayamıyoruz. Bu uyarının uygulamanın güvenliği ile HİÇBİR ilgisi yoktur — 
+sadece Microsoft'un bu dosyayı henüz yeterince "tanımadığı" anlamına gelir. 
+Rufus, Ventoy, HWiNFO gibi araçlar da aynı uyarıyı verir.
 
-SistemBakim'e neden guvenebilirsiniz:
+SistemBakim'e neden güvenebilirsiniz:
 
-✅ %100 acik kaynak — 8.900 satirlik kodun tamami GitHub'da gorulebilir
-✅ Sifir internet baglantisi — hicbir sunucuyla iletisim kurmaz
-✅ Sifir telemetri — izleme, analitik veya veri toplama yoktur
-✅ Kendiniz derleyebilirsiniz — kaynak kodu klonlayip dogrulayabilirsiniz
+✅ %100 açık kaynak — 8.900 satırlık kodun tamamı GitHub'da görülebilir
+✅ Sıfır internet bağlantısı — hiçbir sunucuyla iletişim kurmaz
+✅ Sıfır telemetri — izleme, analitik veya veri toplama yoktur
+✅ Kendiniz derleyebilirsiniz — kaynak kodu klonlayıp doğrulayabilirsiniz
 
-Gecmek icin: "Ek bilgi" → "Yine de calistir" tiklayin.
+Geçmek için: "Ek bilgi" → "Yine de çalıştır" tıklayın.
 
-VirusTotal'da 1-2 flag gorduyseniz: ps2exe ile derlenmis PowerShell scriptlerinde 
-bilinen bir false positive'dir. Buyuk motorlar (Microsoft, Kaspersky, ESET, 
-Bitdefender) hepsinde temiz cikar.
+VirusTotal'da 1-2 flag gördüyseniz: ps2exe ile derlenmiş PowerShell scriptlerinde 
+bilinen bir false positive'dir. Büyük motorlar (Microsoft, Kaspersky, ESET, 
+Bitdefender) hepsinde temiz çıkar.
 ```
 
 ---
 
 ## 2. Registry / Servis Bozuldu — Geri Alma
 
-> Kullanici: "Registry temizleyiciden sonra X programim calismıyor!" / "Servisleri degistirdim, sistemim yavasladı!"
+> Kullanıcı: "Registry temizleyiciden sonra X programım çalışmıyor!" / "Servisleri değiştirdim, sistemim yavaşladı!"
 
 ### English
 
@@ -127,47 +127,47 @@ If none of the above helps, please open a bug report with:
 - The error or symptom you're seeing
 - The backup file contents (if available)
 
-We'll help you fix it. 🔧
+We'll help you fix it.
 ```
 
-### Turkce
+### Türkçe
 
 ```
-Endiselenmeyin — SistemBakim her yikici islemden once otomatik yedek olusturur.
-Geri almak icin:
+Endişelenmeyin — SistemBakim her yıkıcı işlemden önce otomatik yedek oluşturur.
+Geri almak için:
 
-**Registry Temizleyici (Modul #64):**
-1. Su klasoru acin: `%USERPROFILE%\Desktop\BakimRaporlari\`
-2. `RegistryYedek_YYYYMMDD_HHMM.reg` dosyasini bulun
-3. Cift tiklayin → "Evet" deyin
-4. Bilgisayari yeniden baslatin
-→ Silinen tum registry girisleri eski haline donecektir.
+**Registry Temizleyici (Modül #64):**
+1. Şu klasörü açın: `%USERPROFILE%\Desktop\BakimRaporlari\`
+2. `RegistryYedek_YYYYMMDD_HHMM.reg` dosyasını bulun
+3. Çift tıklayın → "Evet" deyin
+4. Bilgisayarı yeniden başlatın
+→ Silinen tüm registry girişleri eski haline dönecektir.
 
-**Hizmet Konfiguratoru (Modul #68):**
-1. `%USERPROFILE%\Desktop\BakimRaporlari\` klasorunu acin
-2. `HizmetYedek_YYYYMMDD_HHMM.json` dosyasini bulun
-3. PowerShell'i yonetici olarak acin
-4. Her servis icin: Set-Service -Name "ServisAdi" -StartupType Automatic
-   (JSON dosyasindaki degerleri kullanin)
+**Hizmet Yapılandırıcısı (Modül #68):**
+1. `%USERPROFILE%\Desktop\BakimRaporlari\` klasörünü açın
+2. `HizmetYedek_YYYYMMDD_HHMM.json` dosyasını bulun
+3. PowerShell'i yönetici olarak açın
+4. Her servis için: Set-Service -Name "ServisAdı" -StartupType Automatic
+   (JSON dosyasındaki değerleri kullanın)
 
-**FPS Optimizer (Modul #26):**
-1. SistemBakim'i acin → Modul #26
-2. [2] "Geri Al" secenegini tiklayin
-→ 11 tweak'in tamami Windows varsayilanlarina doner.
+**FPS Optimizer (Modül #26):**
+1. SistemBakim'i açın → Modül #26
+2. [2] "Geri Al" seçeneğini tıklayın
+→ 11 tweak'in tamamı Windows varsayılanlarına döner.
 
-**Sistem Geri Yukleme (hicbiri islemediyse):**
-Degisikliklerden once geri yukleme noktasi olusturduysaniz (Modul #24):
-1. Win+R → `rstrui.exe` yazin → Enter
-2. Degisikliklerden onceki tarihi secin
+**Sistem Geri Yükleme (hiçbiri işlemediyse):**
+Değişikliklerden önce geri yükleme noktası oluşturduysanız (Modül #24):
+1. Win+R → `rstrui.exe` yazın → Enter
+2. Değişikliklerden önceki tarihi seçin
 
-Bunlarin hicbiri ise yaramadiysa, lutfen bir bug report acin — yardim edecegiz. 🔧
+Bunların hiçbiri işe yaramadıysa, lütfen bir bug report açın — yardım edeceğiz.
 ```
 
 ---
 
-## 3. Ozellik Istegi / UI Onerisi
+## 3. Özellik İsteği / UI Önerisi
 
-> Kullanici: "Su ozellik eklenirse harika olur!" / "UI boyle olsa daha iyi"
+> Kullanıcı: "Şu özellik eklenirse harika olur!" / "UI böyle olsa daha iyi"
 
 ### English
 
@@ -178,7 +178,7 @@ To make sure your idea gets properly tracked and doesn't get lost in the comment
 could you open a Feature Request on GitHub? There's a structured template that helps 
 me understand the context better:
 
-👉 https://github.com/erdi/SistemBakim/issues/new?template=feature_request.yml
+👉 https://github.com/erdiyim/SistemBakim/issues/new?template=feature_request.yml
 
 This way I can:
 - Properly categorize and prioritize it
@@ -186,33 +186,33 @@ This way I can:
 - Update you when it's being worked on
 
 Your feedback directly shapes the roadmap — every feature in v5.0 started as 
-a suggestion like yours. 🙏
+a suggestion like yours.
 ```
 
-### Turkce
+### Türkçe
 
 ```
-Oneriniz icin cok tesekkur ederim — geri bildirimler projeyi sekillendiren 
-en degerli sey!
+Öneriniz için çok teşekkür ederim — geri bildirimler projeyi şekillendiren 
+en değerli şey!
 
-Bu fikrin kaybolmamasi ve duzgun takip edilebilmesi icin bunu GitHub'da bir 
-Feature Request olarak acar misiniz? Hazir bir sablon var:
+Bu fikrin kaybolmaması ve düzgün takip edilebilmesi için bunu GitHub'da bir 
+Feature Request olarak açar mısınız? Hazır bir şablon var:
 
-👉 https://github.com/erdi/SistemBakim/issues/new?template=feature_request.yml
+👉 https://github.com/erdiyim/SistemBakim/issues/new?template=feature_request.yml
 
-Boylece:
-- Doğru kategoriye koyup onceliklendiriyorum
-- Benzer istekleri birlestiriyorum
-- Uzerinde calisildiginda sizi bilgilendiriyorum
+Böylece:
+- Doğru kategoriye koyup önceliklendiriyorum
+- Benzer istekleri birleştiriyorum
+- Üzerinde çalışıldığında sizi bilgilendiriyorum
 
-v5.0'daki her ozellik sizin gibi kullanicilarin onerileriyle basladi. 🙏
+v5.0'daki her özellik sizin gibi kullanıcıların önerileriyle başladı.
 ```
 
 ---
 
-## 4. Uygulama Acilmiyor / Crash
+## 4. Uygulama Açılmıyor / Crash
 
-> Kullanici: "Uygulama acilmiyor!" / "Hemen kapaniyor!"
+> Kullanıcı: "Uygulama açılmıyor!" / "Hemen kapanıyor!"
 
 ### English
 
@@ -243,40 +243,40 @@ If none of these help, please open a bug report with:
 - Any error message you see (screenshot helps!)
 - Whether the CLI version works
 
-👉 https://github.com/erdi/SistemBakim/issues/new?template=bug_report.yml
+👉 https://github.com/erdiyim/SistemBakim/issues/new?template=bug_report.yml
 ```
 
-### Turkce
+### Türkçe
 
 ```
-Bu durumla karsilasmis olmaniz icin uzgunum! Hemen cozelim.
+Bu durumla karşılaşmış olmanız için üzgünüm! Hemen çözelim.
 
-Su kontrolleri yapar misiniz:
+Şu kontrolleri yapar mısınız:
 
-1. **Yonetici olarak calistirin** — Sag tik → "Yonetici olarak calistir". 
-   Cogu modul admin yetkisi gerektirir.
+1. **Yönetici olarak çalıştırın** — Sağ tık → "Yönetici olarak çalıştır". 
+   Çoğu modül admin yetkisi gerektirir.
 
-2. **Windows surumunuzu kontrol edin** — Win10 veya Win11 (64-bit) gerekli. 
-   `winver` komutuyla dogrulayin.
+2. **Windows sürümünüzü kontrol edin** — Win10 veya Win11 (64-bit) gerekli. 
+   `winver` komutuyla doğrulayın.
 
-3. **CLI surumunu deneyin** — `SistemBakim_CLI.exe` dosyasini indirin. Bu 
-   calisip GUI calismiyorsa WPF render sorunu demektir.
+3. **CLI sürümünü deneyin** — `SistemBakim_CLI.exe` dosyasını indirin. Bu 
+   çalışıp GUI çalışmıyorsa WPF render sorunu demektir.
 
-4. **Antivirus kontrolu** — Bazi antivirusler ps2exe dosyalarini engelleyebilir. 
+4. **Antivirüs kontrolü** — Bazı antivirüsler ps2exe dosyalarını engelleyebilir. 
    Karantina logunu kontrol edin.
 
-5. **Log klasorunu kontrol edin** — `%USERPROFILE%\Desktop\BakimRaporlari\` 
-   icinde hata detaylari olabilir.
+5. **Log klasörünü kontrol edin** — `%USERPROFILE%\Desktop\BakimRaporlari\` 
+   içinde hata detayları olabilir.
 
-Bunlar ise yaramadiysa, lutfen bug report acin:
-👉 https://github.com/erdi/SistemBakim/issues/new?template=bug_report.yml
+Bunlar işe yaramadıysa, lütfen bug report açın:
+👉 https://github.com/erdiyim/SistemBakim/issues/new?template=bug_report.yml
 ```
 
 ---
 
-## 5. Hangi Moduller Guvenli?
+## 5. Hangi Modüller Güvenli?
 
-> Kullanici: "Hangi modulleri guvenle kullanabilirim?" / "Sistemi bozar mi?"
+> Kullanıcı: "Hangi modülleri güvenle kullanabilirim?" / "Sistemi bozar mı?"
 
 ### English
 
@@ -301,14 +301,14 @@ Bloatware Remover (#29) — removes Windows apps permanently
 → These modules always ask for explicit confirmation via Onay() dialog
 
 Every module that makes system changes has a built-in reversal mechanism. 
-Full technical documentation: https://github.com/erdi/SistemBakim/blob/main/docs/MODULES.md
+Full technical documentation: https://github.com/erdiyim/SistemBakim/blob/main/docs/MODULES.md
 ```
 
 ---
 
-## 6. Veri Toplaniyor mu / Telemetri
+## 6. Veri Toplanıyor mu / Telemetri
 
-> Kullanici: "Bu uygulama veri topluyor mu?"
+> Kullanıcı: "Bu uygulama veri topluyor mu?"
 
 ### English
 
@@ -321,7 +321,7 @@ This is a single GET request to api.github.com, runs in a background job, times 
 in 6 seconds, and contains no user data — only the app version string.
 
 You can verify this yourself:
-- The source code is fully open: https://github.com/erdi/SistemBakim
+- The source code is fully open: https://github.com/erdiyim/SistemBakim
 - Search for any network call in the code — you'll only find the update check
 - The app works perfectly fine without any internet connection
 
@@ -332,7 +332,7 @@ No accounts, no registration, no cloud sync, no "anonymous usage statistics."
 
 ## 7. Win10 / Win11 Uyumluluk
 
-> Kullanici: "Windows 10'da calisiyor mu?" / "Win11 24H2'de sorun var mi?"
+> Kullanıcı: "Windows 10'da çalışıyor mu?" / "Win11 24H2'de sorun var mı?"
 
 ### English
 
@@ -353,40 +353,40 @@ Minimum requirements:
 
 ---
 
-## 8. Tesekkur ve Yildiz Istegi
+## 8. Teşekkür ve Yıldız İsteği
 
-> Pozitif yorum geldiginde — momentum icin nazikce star isteme
+> Pozitif yorum geldiğinde — momentum için nazikçe star isteme
 
 ### English
 
 ```
-Thank you so much — comments like this make the late nights worth it! 🙏
+Thank you so much — comments like this make the late nights worth it!
 
 If SistemBakim saved you some time (or disk space!), a GitHub star would really 
-help others discover it: https://github.com/erdi/SistemBakim
+help others discover it: https://github.com/erdiyim/SistemBakim
 
 And if you run into anything weird, don't hesitate to open an issue. 
-Happy optimizing! ⚡
+Happy optimizing!
 ```
 
-### Turkce
+### Türkçe
 
 ```
-Cok tesekkur ederim — boyle yorumlar gece mesailerini anlamli kiliyor! 🙏
+Çok teşekkür ederim — böyle yorumlar gece mesailerini anlamlı kılıyor!
 
-SistemBakim size zaman (veya disk alani!) kazandirdiysa, GitHub'da bir yildiz 
-birakmak baskalarinin da kesfedemasine yardimci olur: 
-https://github.com/erdi/SistemBakim
+SistemBakim size zaman (veya disk alanı!) kazandırdıysa, GitHub'da bir yıldız 
+bırakmak başkalarının da keşfetmesine yardımcı olur: 
+https://github.com/erdiyim/SistemBakim
 
-Herhangi bir sorun yasarsaniz issue acmaktan cekinmeyin. 
-Kolay gelsin! ⚡
+Herhangi bir sorun yaşarsanız issue açmaktan çekinmeyin. 
+Kolay gelsin!
 ```
 
 ---
 
 ## 9. Duplicate / Tekrar Eden Issue
 
-> Daha once bildirilen bir bug/istek tekrar acildiginda
+> Daha önce bildirilen bir bug/istek tekrar açıldığında
 
 ### English
 
@@ -402,9 +402,9 @@ this issue with the additional details.
 
 ---
 
-## 10. Dil Destegi / Ingilizce UI
+## 10. Dil Desteği / İngilizce UI
 
-> Kullanici: "Turkce anlamiyorum, Ingilizce olsa..." / "Will there be English UI?"
+> Kullanıcı: "Türkçe anlamıyorum, İngilizce olsa..." / "Will there be English UI?"
 
 ### English
 
@@ -414,17 +414,17 @@ but all module names and most technical terms are recognizable.
 
 If you'd like to contribute translations, that would be amazing — it's listed 
 as a contribution area in the README:
-https://github.com/erdi/SistemBakim#contributing
+https://github.com/erdiyim/SistemBakim#contributing
 
 For now, the full module documentation in English is available here:
-https://github.com/erdi/SistemBakim/blob/main/docs/MODULES.md
+https://github.com/erdiyim/SistemBakim/blob/main/docs/MODULES.md
 ```
 
 ---
 
 <div align="center">
 
-*Bu sablonlari duruma gore kucuk duzenlemelerle kullanin.
-Kisisel dokunuslar (kullanicinin adini kullanmak vb.) etkiyi artirir.*
+*Bu şablonları duruma göre küçük düzenlemelerle kullanın.
+Kişisel dokunuşlar (kullanıcının adını kullanmak vb.) etkiyi artırır.*
 
 </div>

@@ -127,8 +127,8 @@ New professional Inno Setup installer:
 
 <div align="center">
 
-**Built with obsession by [Erdi](https://github.com/erdi) + [Claude](https://claude.ai)**
+**Built with obsession by [Erdi](https://github.com/erdiyim) + [Claude](https://claude.ai)**
 
-[Download v5.0](https://github.com/erdi/SistemBakim/releases/latest)
+[Download v5.0](https://github.com/erdiyim/SistemBakim/releases/latest)
 
 </div>

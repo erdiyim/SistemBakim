@@ -4,7 +4,7 @@
 
 ### Case Study · LinkedIn Post · B2B Agency Showcase
 
-*Kisisel marka, profesyonel ag ve kurumsal satis icin hazir metinler.*
+*Kişisel marka, profesyonel ağ ve kurumsal satış için hazır metinler.*
 
 </div>
 
@@ -12,8 +12,8 @@
 
 # 1. Portfolyo Case Study
 
-> Kisisel web sitende "Projects" veya "Case Studies" bolumune ekle.
-> Markdown veya HTML olarak kullanilabilir. Gorseller icin yer tutucular isaretlenmistir.
+> Kişisel web sitende "Projects" veya "Case Studies" bölümüne ekle.
+> Markdown veya HTML olarak kullanılabilir. Görseller için yer tutucular işaretlenmiştir.
 
 ---
 
@@ -177,25 +177,25 @@ A version tag push is the only manual step. Everything else — compilation, ins
 
 ### Links
 
-- **GitHub:** [github.com/erdi/SistemBakim](https://github.com/erdi/SistemBakim)
-- **Live Landing Page:** [erdi.github.io/SistemBakim](https://erdi.github.io/SistemBakim)
-- **Technical Documentation:** [Module Reference (69 modules)](https://github.com/erdi/SistemBakim/blob/main/docs/MODULES.md)
+- **GitHub:** [github.com/erdiyim/SistemBakim](https://github.com/erdiyim/SistemBakim)
+- **Live Landing Page:** [erdiyim.github.io/SistemBakim](https://erdiyim.github.io/SistemBakim)
+- **Technical Documentation:** [Module Reference (69 modules)](https://github.com/erdiyim/SistemBakim/blob/main/docs/MODULES.md)
 
 ---
 
-`<!-- Gorsel yer tutucular -->`
-`<!-- [Screenshot: Dashboard gorunumu] -->`
+`<!-- Görsel yer tutucular -->`
+`<!-- [Screenshot: Dashboard görünümü] -->`
 `<!-- [Screenshot: Disk Treemap] -->`
 `<!-- [Screenshot: Before/After Comparison] -->`
-`<!-- [Diagram: Architecture (yukaridaki ASCII'nin gorsel versiyonu)] -->`
+`<!-- [Diagram: Architecture (yukarıdaki ASCII'nin görsel versiyonu)] -->`
 
 ---
 ---
 
 # 2. LinkedIn "Build in Public" Post
 
-> Dogrudan LinkedIn'e kopyala-yapistir. Karakter siniri: ~3000.
-> Emoji kullanimi LinkedIn algoritmasi icin optimize edilmistir (asiri degil, stratejik).
+> Doğrudan LinkedIn'e kopyala-yapıştır. Karakter sınırı: ~3000.
+> Emoji kullanımı LinkedIn algoritması için optimize edilmiştir (aşırı değil, stratejik).
 
 ---
 
@@ -259,8 +259,8 @@ If you're building something solo: document your architecture decisions. They're
 
 ⸻
 
-🔗 GitHub: github.com/erdi/SistemBakim
-📦 Download: github.com/erdi/SistemBakim/releases/latest
+🔗 GitHub: github.com/erdiyim/SistemBakim
+📦 Download: github.com/erdiyim/SistemBakim/releases/latest
 
 Free. Open source. Zero telemetry. 
 
@@ -273,29 +273,29 @@ If you've read this far, I'd love to hear: what's the hardest engineering constr
 
 ### LinkedIn Post Stratejik Notlar
 
-| Parametre | Deger |
+| Parametre | Değer |
 |-----------|-------|
-| Uzunluk | ~2,800 karakter (ideal aralik: 1,500-3,000) |
-| Yapi | Hook → 3 numararali bolum → CTA → Soru |
-| Emoji kullanimi | Minimal ve stratejik (liste isaretleyicileri, linkler) |
-| Bold basliklar | Unicode bold karakterler (LinkedIn native bold desteklemiyor) |
-| Hashtag sayisi | 8 (LinkedIn optimal: 3-10) |
+| Uzunluk | ~2,800 karakter (ideal aralık: 1,500-3,000) |
+| Yapı | Hook → 3 numaralı bölüm → CTA → Soru |
+| Emoji kullanımı | Minimal ve stratejik (liste işaretleyicileri, linkler) |
+| Bold başlıklar | Unicode bold karakterler (LinkedIn native bold desteklemiyor) |
+| Hashtag sayısı | 8 (LinkedIn optimal: 3-10) |
 | CTA | Soru ile bitiyor — yorum tetikleyici |
-| Gorseller | Post ile birlikte: Dashboard screenshot + Architecture diagram |
+| Görseller | Post ile birlikte: Dashboard screenshot + Architecture diagram |
 
-**Zamanlama:** Sali veya Carsamba 08:00-10:00 (yerel saat). LinkedIn'de B2B etkilenimi hafta ici sabah saatlerinde en yuksek.
+**Zamanlama:** Salı veya Çarşamba 08:00-10:00 (yerel saat). LinkedIn'de B2B etkileşimi hafta içi sabah saatlerinde en yüksek.
 
 ---
 ---
 
 # 3. B2B Ajans Vitrini
 
-> Ajans web sitesinde "Portfolio", "Case Studies" veya "Our Work" bolumune ekle.
-> Iki versiyon: Kisa (paragraf) ve Uzun (detayli).
+> Ajans web sitesinde "Portfolio", "Case Studies" veya "Our Work" bölümüne ekle.
+> İki versiyon: Kısa (paragraf) ve Uzun (detaylı).
 
 ---
 
-## Versiyon A: Kisa Paragraf (Web sitesi, teklif dokumani, sunumlarda)
+## Versiyon A: Kısa Paragraf (Web sitesi, teklif dokümanı, sunumlarda)
 
 ```
 SistemBakim v5.0 — Enterprise-Grade Windows Platform, Built Solo
@@ -324,7 +324,7 @@ to deliver it.
 
 ---
 
-## Versiyon B: Detayli (Ozel portfolio sayfasi veya teklif eki)
+## Versiyon B: Detaylı (Özel portfolyo sayfası veya teklif eki)
 
 ```
 CASE REFERENCE: SistemBakim v5.0
@@ -392,7 +392,7 @@ This is the engineering standard we apply to every engagement.
 
 ---
 
-## Versiyon C: Tek Cumle (Email imzasi, kisa bio, konusma tanitimi)
+## Versiyon C: Tek Cümle (Email imzası, kısa bio, konuşma tanıtımı)
 
 ```
 Creator of SistemBakim — an 11,000-line, zero-dependency Windows maintenance 
@@ -402,30 +402,30 @@ an asynchronous WPF architecture with hardcoded system safety guarantees.
 
 ---
 
-## Versiyon D: Turkce B2B (Turkiye pazari icin)
+## Versiyon D: Türkçe B2B (Türkiye pazarı için)
 
 ```
-SistemBakim v5.0 — Isletim Sistemi Seviyesinde Muhendislik
+SistemBakim v5.0 — İşletim Sistemi Seviyesinde Mühendislik
 
-Biz sadece web sitesi veya mobil uygulama yapmiyoruz. Sistem muhendisligi 
-yapiyoruz.
+Biz sadece web sitesi veya mobil uygulama yapmıyoruz. Sistem mühendisliği 
+yapıyoruz.
 
-SistemBakim, 11.000 satirlik bir Windows bakim platformunun tek bir 338 KB'lik 
-calistirilabilir dosyaya sikistirilmis halidir — sifir dis bagimlilik, sifir 
-calisma zamani kurulumu, sifir cokme toleransi. 69 farkli sistem operasyonunu, 
-15 dakikalik arka plan gorevleri sirasinda bile arayuzun donmamasini saglayan 
-asenkron bir WPF mimarisi uzerinden yonetir. 21 kritik Windows servisini 
-donanima gommis guvenlik listeleriyle korur ve her registry ve servis 
-degisikliginden once otomatik yedek olusturur.
+SistemBakim, 11.000 satırlık bir Windows bakım platformunun tek bir 338 KB'lik 
+çalıştırılabilir dosyaya sıkıştırılmış halidir — sıfır dış bağımlılık, sıfır 
+çalışma zamanı kurulumu, sıfır çökme toleransı. 69 farklı sistem operasyonunu, 
+15 dakikalık arka plan görevleri sırasında bile arayüzün donmamasını sağlayan 
+asenkron bir WPF mimarisi üzerinden yönetir. 21 kritik Windows servisini 
+donanıma gömülmüş güvenlik listeleriyle korur ve her registry ve servis 
+değişikliğinden önce otomatik yedek oluşturur.
 
-Proje, tam bir CI/CD pipeline'i (GitHub Actions → Inno Setup → otomatik release), 
-yapilandirilmis hata takibi, profesyonel kurulum sihirbazi ve kod tabanindaki 
-her registry anahtarinin teknik dokumantasyonuyla birlikte teslim edilir.
+Proje, tam bir CI/CD pipeline'ı (GitHub Actions → Inno Setup → otomatik release), 
+yapılandırılmış hata takibi, profesyonel kurulum sihirbazı ve kod tabanındaki 
+her registry anahtarının teknik dokümantasyonuyla birlikte teslim edilir.
 
-Bu, her musteri projesine getirdigimiz muhendislik disiplinidir — ister 
-kullaniciya yonelik bir web uygulamasi olsun, ister isletim sistemi 
-seviyesinde bir otomasyon platformu. Projeniz sifir hata toleransi, karmasik 
-durum yonetimi veya derin sistem entegrasyonu gerektiriyorsa, bunu teslim 
+Bu, her müşteri projesine getirdiğimiz mühendislik disiplinidir — ister 
+kullanıcıya yönelik bir web uygulaması olsun, ister işletim sistemi 
+seviyesinde bir otomasyon platformu. Projeniz sıfır hata toleransı, karmaşık 
+durum yönetimi veya derin sistem entegrasyonu gerektiriyorsa, bunu teslim 
 edecek mimari zihniyete sahibiz.
 ```
 
@@ -434,8 +434,8 @@ edecek mimari zihniyete sahibiz.
 <div align="center">
 
 *Bu metinler birbirini tamamlar:*
-*Case Study → derinlik, LinkedIn → gorunurluk, B2B → guven ve satis.*
+*Case Study → derinlik, LinkedIn → görünürlük, B2B → güven ve satış.*
 
-*Hepsini ayni hafta icinde yayinla — tutarli bir profesyonel imaj olusturur.*
+*Hepsini aynı hafta içinde yayınla — tutarlı bir profesyonel imaj oluşturur.*
 
 </div>

@@ -18,10 +18,10 @@
 
 1. [Temizlik & Disk (Cleaning)](#1-temizlik--disk-cleaning) — 11 modules
 2. [Sistem (System)](#2-sistem-system) — 16 modules
-3. [Guvenlik (Security)](#3-guvenlik-security) — 6 modules
-4. [Ag & Internet (Network)](#4-ag--internet-network) — 6 modules
+3. [Güvenlik (Security)](#3-guvenlik-security) — 6 modules
+4. [Ağ & İnternet (Network)](#4-ag--internet-network) — 6 modules
 5. [Oyun & Performans (Gaming)](#5-oyun--performans-gaming) — 9 modules
-6. [Donanim (Hardware)](#6-donanim-hardware) — 6 modules
+6. [Donanım (Hardware)](#6-donanim-hardware) — 6 modules
 7. [Raporlar & Otomasyon (Reports)](#7-raporlar--otomasyon-reports) — 6 modules
 8. [Gizlilik (Privacy)](#8-gizlilik-privacy) — 5 modules
 9. [Safety Guarantees](#safety-guarantees)
@@ -188,15 +188,15 @@ Creates JSON backup of current service states before any change. Restore by load
 
 ---
 
-## 3. Guvenlik (Security)
+## 3. Güvenlik (Security)
 
 *6 modules — security auditing and threat detection.*
 
-### #16 — Guvenlik Kontrol
+### #16 — Güvenlik Kontrol
 
 Checks status of Windows Defender (`Get-MpComputerStatus`), Firewall (`Get-NetFirewallProfile`), and UAC (`HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System` → `EnableLUA`).
 
-### #17 — Gelismis Guvenlik
+### #17 — Gelişmiş Güvenlik
 
 Scans open ports via `Get-NetTCPConnection`, checks RDP status (`HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server` → `fDenyTSConnections`), verifies BitLocker status, and audits the hosts file.
 
@@ -218,7 +218,7 @@ Detects pre-installed manufacturer software (HP, Dell, Lenovo, Acer, ASUS patter
 
 ---
 
-## 4. Ag & Internet (Network)
+## 4. Ağ & İnternet (Network)
 
 *6 modules — network diagnostics, speed testing, and optimization.*
 
@@ -332,7 +332,7 @@ All changes are session-temporary — restart restores defaults.
 
 ---
 
-## 6. Donanim (Hardware)
+## 6. Donanım (Hardware)
 
 *6 modules — hardware diagnostics and health monitoring.*
 

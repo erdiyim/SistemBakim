@@ -9,7 +9,7 @@
 #define MyAppName "SistemBakim"
 #define MyAppVersion "5.0"
 #define MyAppPublisher "Erdi"
-#define MyAppURL "https://github.com/erdi/SistemBakim"
+#define MyAppURL "https://github.com/erdiyim/SistemBakim"
 #define MyAppExeName "SistemBakim.exe"
 #define MyAppCLIName "SistemBakim_CLI.exe"
 

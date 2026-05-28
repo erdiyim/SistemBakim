@@ -1,21 +1,21 @@
 # SistemBakim v5.0 — Launch Kit
 
-Viral lansman metinleri. Kopyala-yapistir hazir.
+Viral lansman metinleri. Kopyala-yapıştır hazır.
 
 ---
 
 ## 1. Reddit Post
 
-> Bu metni r/Windows11, r/pcmasterrace, r/sysadmin, r/opensource, r/software icin kullanabilirsin.
-> Baslik ve govde ayri verilmistir.
+> Bu metni r/Windows11, r/pcmasterrace, r/sysadmin, r/opensource, r/software için kullanabilirsin.
+> Başlık ve gövde ayrı verilmiştir.
 
-### Title (Baslik)
+### Title (Başlık)
 
 ```
 I built a 69-module Windows maintenance tool because I was tired of CCleaner asking me to upgrade
 ```
 
-### Body (Govde)
+### Body (Gövde)
 
 ```
 Hey everyone,
@@ -54,9 +54,9 @@ Over time it grew. Friends asked for it. I added a GUI. Then a registry cleaner.
 
 **Links:**
 
-- GitHub: https://github.com/erdi/SistemBakim
-- Download: https://github.com/erdi/SistemBakim/releases/latest
-- Full module documentation: https://github.com/erdi/SistemBakim/blob/main/docs/MODULES.md
+- GitHub: https://github.com/erdiyim/SistemBakim
+- Download: https://github.com/erdiyim/SistemBakim/releases/latest
+- Full module documentation: https://github.com/erdiyim/SistemBakim/blob/main/docs/MODULES.md
 
 It's free and open source. I'd genuinely appreciate feedback — especially if something breaks on your setup. I've tested on Win10 22H2 and Win11 24H2 but edge cases are always lurking.
 
@@ -67,8 +67,8 @@ Note: You'll get a SmartScreen warning because I don't have an EV code signing c
 
 ## 2. Product Hunt — Maker's Comment
 
-> Bu metni Product Hunt'a urun gonderdikten sonra ilk yorum olarak ekle.
-> "Maker's Comment" formati — kisisel hikaye + teknik fark + vizyon.
+> Bu metni Product Hunt'a ürün gönderdikten sonra ilk yorum olarak ekle.
+> "Maker's Comment" formatı — kişisel hikaye + teknik fark + vizyon.
 
 ### Tagline (Slogan — 60 karakter)
 
@@ -79,7 +79,7 @@ Note: You'll get a SmartScreen warning because I don't have an EV code signing c
 ### Maker's Comment
 
 ```
-Hey Product Hunt! 👋
+Hey Product Hunt!
 
 I'm Erdi, and I built SistemBakim because I was frustrated with the state of Windows maintenance tools.
 
@@ -107,15 +107,15 @@ What makes it different:
 
 The code is open source on GitHub. I'd love your feedback — what modules would you add? What's missing?
 
-https://github.com/erdi/SistemBakim
+https://github.com/erdiyim/SistemBakim
 ```
 
 ---
 
 ## 3. Hacker News (Show HN)
 
-> HN icin kisa, teknik odakli, "pazarlama" kokmayan bir post.
-> "Show HN" formati kullan.
+> HN için kısa, teknik odaklı, "pazarlama" kokmayan bir post.
+> "Show HN" formatı kullan.
 
 ### Title
 
@@ -141,18 +141,18 @@ Safety mechanisms: 21 services are hardcoded as protected (no profile can disabl
 
 No internet required, no telemetry, no dependencies. 338 KB GUI, 486 KB CLI.
 
-GitHub: https://github.com/erdi/SistemBakim
+GitHub: https://github.com/erdiyim/SistemBakim
 ```
 
 ---
 
 ## Posting Checklist
 
-- [ ] Reddit: Post to r/Windows11, r/pcmasterrace ilk. Yanit gelirse r/sysadmin ve r/opensource'a da at.
-- [ ] Product Hunt: Pazartesi veya Sali gunu 00:01 PST'de yayinla (en yuksek gorunurluk).
-- [ ] Hacker News: "Show HN" prefiksi ile gonder. Hafta ici ogle saatlerinde (US East) en iyi sonuc verir.
-- [ ] GitHub: Release notes'u yayinla, README "Sponsor" butonunu aktif et.
-- [ ] Twitter/X: Reddit post linkini paylasarak cross-traffic olustur.
+- [ ] Reddit: Post to r/Windows11, r/pcmasterrace ilk. Yanıt gelirse r/sysadmin ve r/opensource'a da at.
+- [ ] Product Hunt: Pazartesi veya Salı günü 00:01 PST'de yayınla (en yüksek görünürlük).
+- [ ] Hacker News: "Show HN" prefiksi ile gönder. Hafta içi öğle saatlerinde (US East) en iyi sonuç verir.
+- [ ] GitHub: Release notes'u yayınla, README "Sponsor" butonunu aktif et.
+- [ ] Twitter/X: Reddit post linkini paylaşarak cross-traffic oluştur.
 
 ---
 
@@ -166,4 +166,4 @@ GitHub: https://github.com/erdi/SistemBakim
 
 ---
 
-*Bu dosya sadece dahili kullanim icindir — dogrudan yayinlanmaz.*
+*Bu dosya sadece dahili kullanım içindir — doğrudan yayınlanmaz.*
