@@ -932,23 +932,46 @@ $global:APP_ICON_BMP = IkonBitmapOlustur
             </StackPanel>
           </Grid>
         </Border>
-        <Button x:Name="BtnSonucKapat" Cursor="Hand" HorizontalAlignment="Center"
-                Background="Transparent" BorderThickness="0" Padding="28,10">
-          <Button.Template>
-            <ControlTemplate TargetType="Button">
-              <Border x:Name="bd" CornerRadius="10" Padding="28,10"
-                      Background="#1A1F2E">
-                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              </Border>
-              <ControlTemplate.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                  <Setter TargetName="bd" Property="Background" Value="#252B3B"/>
-                </Trigger>
-              </ControlTemplate.Triggers>
-            </ControlTemplate>
-          </Button.Template>
-          <TextBlock Text="Tamam" FontSize="13" Foreground="#8A8FA0" FontFamily="Segoe UI"/>
-        </Button>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+          <Button x:Name="BtnRaporOlustur" Cursor="Hand"
+                  Background="#15803D" BorderThickness="0" Padding="18,10" Margin="0,0,10,0">
+            <Button.Template>
+              <ControlTemplate TargetType="Button">
+                <Border x:Name="bd" CornerRadius="10" Padding="18,10"
+                        Background="#15803D">
+                  <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <ControlTemplate.Triggers>
+                  <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bd" Property="Background" Value="#16A34A"/>
+                  </Trigger>
+                </ControlTemplate.Triggers>
+              </ControlTemplate>
+            </Button.Template>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                         Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0"/>
+              <TextBlock Text="Rapor Olustur" FontSize="13" Foreground="White" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+            </StackPanel>
+          </Button>
+          <Button x:Name="BtnSonucKapat" Cursor="Hand"
+                  Background="Transparent" BorderThickness="0" Padding="28,10">
+            <Button.Template>
+              <ControlTemplate TargetType="Button">
+                <Border x:Name="bd" CornerRadius="10" Padding="28,10"
+                        Background="#1A1F2E">
+                  <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <ControlTemplate.Triggers>
+                  <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bd" Property="Background" Value="#252B3B"/>
+                  </Trigger>
+                </ControlTemplate.Triggers>
+              </ControlTemplate>
+            </Button.Template>
+            <TextBlock Text="Kapat" FontSize="13" Foreground="#8A8FA0" FontFamily="Segoe UI"/>
+          </Button>
+        </StackPanel>
       </StackPanel>
     </Border>
 
@@ -1229,7 +1252,8 @@ $TreemapBilgi    = $window.FindName("TreemapBilgi")
 $TreemapCanvas   = $window.FindName("TreemapCanvas")
 $BtnTreemapKapat = $window.FindName("BtnTreemapKapat")
 
-# Sonuc paneli kapat butonu
+# Sonuc paneli butonlari
+$BtnRaporOlustur = $window.FindName("BtnRaporOlustur")
 $BtnSonucKapat.Add_Click({ $SonucPanel.Visibility = "Collapsed" }.GetNewClosure())
 $BtnKarsilastirmaKapat.Add_Click({ $KarsilastirmaPanel.Visibility = "Collapsed" }.GetNewClosure())
 $BtnTreemapKapat.Add_Click({
@@ -2401,73 +2425,318 @@ $BtnLogTemizle.Add_Click({ $TxtCikti.Clear(); $TxtDurum.Text = "" }.GetNewClosur
 $BtnDurdur.Add_Click({ DurdurGomulu }.GetNewClosure())
 
 # == DISA AKTARMA (EXPORT) ========================================
-$BtnDisaAktar.Add_Click({
-    try {
-        $icerik = $TxtCikti.Text
-        if ([string]::IsNullOrWhiteSpace($icerik)) {
-            ToastGoster "Uyari" "Disa aktarilacak cikti yok. Once bir modul calistirin." "#FB923C" ([string][char]0xE7BA)
-            return
-        }
+# == PROFESYONEL HTML RAPOR OLUSTURMA ==============================
+function HtmlRaporOlustur {
+    param([bool]$SonucPaneldenMi = $false)
 
+    try {
         $logKlasor = Join-Path $env:APPDATA "SistemBakim\Logs"
         if (-not (Test-Path $logKlasor)) { New-Item -ItemType Directory -Path $logKlasor -Force | Out-Null }
         $tarih = Get-Date -Format "yyyyMMdd_HHmmss"
+        $tarihGosterim = Get-Date -Format "dd.MM.yyyy HH:mm:ss"
 
-        # --- TXT Export ---
-        $txtDosya = Join-Path $logKlasor ("SistemBakim_Rapor_{0}.txt" -f $tarih)
-        $txtRapor = [System.Collections.Generic.List[string]]::new()
-        $txtRapor.Add("=" * 60)
-        $txtRapor.Add("  SistemBakim - Islem Raporu")
-        $txtRapor.Add("  Tarih: " + (Get-Date -Format "dd.MM.yyyy HH:mm:ss"))
-        $txtRapor.Add("  Bilgisayar: " + $env:COMPUTERNAME + " / " + $env:USERNAME)
-        $txtRapor.Add("=" * 60)
-        $txtRapor.Add("")
-        $txtRapor.Add($icerik)
-        $txtRapor.Add("")
-        $txtRapor.Add("=" * 60)
-        $txtRapor.Add("  SistemBakim v5 - github.com/erdiyim/SistemBakim")
-        [System.IO.File]::WriteAllLines($txtDosya, $txtRapor.ToArray(), [System.Text.Encoding]::UTF8)
+        # ── Sistem bilgileri toplama ──
+        $sysInfo = @{}
+        try {
+            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+            $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
+            $sysInfo.OS = $os.Caption -replace 'Microsoft ',''
+            $sysInfo.Build = $os.BuildNumber
+            $sysInfo.RAM = "{0:N1} GB" -f ($os.TotalVisibleMemorySize / 1MB)
+            $sysInfo.RAMKullanim = "{0:N0}%" -f ((1 - $os.FreePhysicalMemory / $os.TotalVisibleMemorySize) * 100)
+            $sysInfo.CPU = $cpu.Name -replace '\s+', ' '
+            $sysInfo.Bilgisayar = $env:COMPUTERNAME
+            $sysInfo.Kullanici = $env:USERNAME
+        } catch {
+            $sysInfo.OS = "Windows"; $sysInfo.Build = "-"; $sysInfo.RAM = "-"
+            $sysInfo.RAMKullanim = "-"; $sysInfo.CPU = "-"
+            $sysInfo.Bilgisayar = $env:COMPUTERNAME; $sysInfo.Kullanici = $env:USERNAME
+        }
 
-        # --- HTML Export ---
-        $htmlDosya = Join-Path $logKlasor ("SistemBakim_Rapor_{0}.html" -f $tarih)
-        $satirlar = $icerik -split "`n"
-        $htmlBody = ""
-        foreach ($s in $satirlar) {
-            $satir = $s -replace '&','&amp;' -replace '<','&lt;' -replace '>','&gt;' -replace '"','&quot;'
-            if ($satir -match '^\[.*\]\s+MODUL|BASLIK|TAMAMLANDI|SONUC') {
-                $htmlBody += "<div class='ok'>$satir</div>`n"
-            } elseif ($satir -match 'HATA|UYARI|Basarisiz|Red') {
-                $htmlBody += "<div class='hata'>$satir</div>`n"
-            } else {
-                $htmlBody += "<div>$satir</div>`n"
+        # Disk bilgisi
+        try {
+            $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'" -ErrorAction Stop
+            $sysInfo.DiskToplam = "{0:N0} GB" -f ($disk.Size / 1GB)
+            $sysInfo.DiskBos = "{0:N1} GB" -f ($disk.FreeSpace / 1GB)
+            $sysInfo.DiskKullanim = "{0:N0}" -f ((1 - $disk.FreeSpace / $disk.Size) * 100)
+        } catch { $sysInfo.DiskToplam = "-"; $sysInfo.DiskBos = "-"; $sysInfo.DiskKullanim = "0" }
+
+        # ── Sonuc verilerini al ──
+        $islemAdi = if ($TxtIslemAdi.Text) { $TxtIslemAdi.Text } else { "Genel Islem" }
+        $islenenSay = if ($SonucDosyaSay.Text) { $SonucDosyaSay.Text } else { "0" }
+        $kazanimTxt = if ($SonucKazanim.Text -and $SonucKazanim.Text -ne "-") { $SonucKazanim.Text } else { "-" }
+        $hataSay = if ($SonucHata.Text) { $SonucHata.Text } else { "0" }
+        $sureTxt = if ($SonucSure.Text) { $SonucSure.Text } else { "-" }
+
+        # Oncesi/Sonrasi verileri
+        $diskOnceTxt = if ($KsDiskOnce.Text -ne "--") { $KsDiskOnce.Text } else { $null }
+        $diskSonraTxt = if ($KsDiskSonra.Text -ne "--") { $KsDiskSonra.Text } else { $null }
+        $ramOnceTxt = if ($KsRamOnce.Text -ne "--") { $KsRamOnce.Text } else { $null }
+        $ramSonraTxt = if ($KsRamSonra.Text -ne "--") { $KsRamSonra.Text } else { $null }
+
+        # ── Log icerigi parse ──
+        $logSatirlar = @()
+        if ($global:LOG_DOSYA -and (Test-Path $global:LOG_DOSYA)) {
+            $logSatirlar = Get-Content $global:LOG_DOSYA -ErrorAction SilentlyContinue
+        }
+        $ciktiSatirlar = $TxtCikti.Text -split "`n"
+
+        # Modul bazli sonuclari ayristir
+        $modulSonuclari = [System.Collections.Generic.List[hashtable]]::new()
+        $aktifModul = $null
+        foreach ($satir in $ciktiSatirlar) {
+            if ($satir -match '^\[(\d{2}:\d{2}:\d{2})\]\s+(.+)$') {
+                $zaman = $Matches[1]
+                $icerikSatir = $Matches[2]
+                if ($icerikSatir -match 'MODUL|baslatiliyor|calistiriliyor') {
+                    if ($aktifModul) { $modulSonuclari.Add($aktifModul) }
+                    $aktifModul = @{ Ad = $icerikSatir; Zaman = $zaman; Satirlar = [System.Collections.Generic.List[string]]::new(); Durum = "OK" }
+                } elseif ($aktifModul) {
+                    $aktifModul.Satirlar.Add($icerikSatir)
+                    if ($icerikSatir -match 'HATA|Basarisiz|Exception') { $aktifModul.Durum = "HATA" }
+                    elseif ($icerikSatir -match 'UYARI|Atlandi') { $aktifModul.Durum = "UYARI" }
+                }
             }
         }
+        if ($aktifModul) { $modulSonuclari.Add($aktifModul) }
+
+        # ── SVG Gauge olustur (Disk Kullanim) ──
+        $diskPct = [Math]::Min(100, [Math]::Max(0, [int]$sysInfo.DiskKullanim))
+        $gaugeColor = if ($diskPct -lt 60) { "#34D399" } elseif ($diskPct -lt 85) { "#FBBF24" } else { "#F87171" }
+        $circumference = 251.2  # 2 * pi * 40
+        $dashOffset = $circumference - ($circumference * $diskPct / 100)
+
+        # ── Modul detay satirlari olustur ──
+        $modulRows = ""
+        $modIdx = 0
+        foreach ($m in $modulSonuclari) {
+            $modIdx++
+            $durumRenk = switch ($m.Durum) { "OK" { "#34D399" } "UYARI" { "#FBBF24" } "HATA" { "#F87171" } default { "#7A8194" } }
+            $durumIkon = switch ($m.Durum) { "OK" { "&#10003;" } "UYARI" { "&#9888;" } "HATA" { "&#10007;" } default { "-" } }
+            $detay = ($m.Satirlar | Select-Object -First 3) -join " | "
+            if ($detay.Length -gt 120) { $detay = $detay.Substring(0, 117) + "..." }
+            $detay = $detay -replace '&','&amp;' -replace '<','&lt;' -replace '>','&gt;'
+            $adTemiz = $m.Ad -replace '&','&amp;' -replace '<','&lt;' -replace '>','&gt;'
+            $modulRows += "<tr><td style='color:#5A6478'>$modIdx</td><td>$adTemiz</td><td style='color:$durumRenk;font-weight:600'>$durumIkon $($m.Durum)</td><td style='color:#5A6478;font-size:11px'>$detay</td></tr>`n"
+        }
+        if (-not $modulRows) {
+            $modulRows = "<tr><td colspan='4' style='color:#5A6478;text-align:center;padding:20px'>Detayli modul verisi mevcut degil</td></tr>"
+        }
+
+        # ── Oncesi/Sonrasi HTML blogu ──
+        $karsilastirmaHtml = ""
+        if ($diskOnceTxt -and $diskSonraTxt) {
+            $karsilastirmaHtml = @"
+<div class="section">
+  <h2>Oncesi / Sonrasi Karsilastirma</h2>
+  <div class="cards">
+    <div class="card" style="flex:1">
+      <div class="card-label">Disk (Bos Alan)</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div><span style="color:#F87171;font-size:18px;font-weight:700">$diskOnceTxt</span><br/><span style="color:#5A6478;font-size:11px">Once</span></div>
+        <span style="color:#3D4555;font-size:20px">&#8594;</span>
+        <div><span style="color:#34D399;font-size:18px;font-weight:700">$diskSonraTxt</span><br/><span style="color:#5A6478;font-size:11px">Sonra</span></div>
+      </div>
+    </div>
+    <div class="card" style="flex:1">
+      <div class="card-label">RAM (Bos)</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div><span style="color:#F87171;font-size:18px;font-weight:700">$ramOnceTxt</span><br/><span style="color:#5A6478;font-size:11px">Once</span></div>
+        <span style="color:#3D4555;font-size:20px">&#8594;</span>
+        <div><span style="color:#34D399;font-size:18px;font-weight:700">$ramSonraTxt</span><br/><span style="color:#5A6478;font-size:11px">Sonra</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+"@
+        }
+
+        # ── Log ciktisi (son 50 satir) ──
+        $logHtml = ""
+        $sonSatirlar = $ciktiSatirlar | Select-Object -Last 50
+        foreach ($s in $sonSatirlar) {
+            $satir = $s -replace '&','&amp;' -replace '<','&lt;' -replace '>','&gt;'
+            if ($satir -match 'HATA|UYARI|Basarisiz|Exception') {
+                $logHtml += "<div class='log-hata'>$satir</div>`n"
+            } elseif ($satir -match 'TAMAMLANDI|Basarili|OK') {
+                $logHtml += "<div class='log-ok'>$satir</div>`n"
+            } else {
+                $logHtml += "<div>$satir</div>`n"
+            }
+        }
+
+        # ── ANA HTML SABLONU ──
         $htmlIcerik = @"
 <!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8">
-<title>SistemBakim Rapor - $tarih</title>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SistemBakim Rapor - $tarihGosterim</title>
 <style>
-body{background:#0D1117;color:#C9D1D9;font-family:Consolas,monospace;font-size:13px;padding:30px;max-width:900px;margin:0 auto}
-h1{color:#7C5CFC;font-size:20px;border-bottom:2px solid #1A1F2E;padding-bottom:10px}
-.meta{color:#5A6478;font-size:11px;margin-bottom:20px}
-.ok{color:#34D399} .hata{color:#F87171}
-div{line-height:1.6;white-space:pre-wrap;word-wrap:break-word}
-.footer{margin-top:30px;padding-top:10px;border-top:1px solid #1A1F2E;color:#3D4555;font-size:11px}
-</style></head><body>
-<h1>SistemBakim - Islem Raporu</h1>
-<div class="meta">Tarih: $(Get-Date -Format "dd.MM.yyyy HH:mm:ss") | $env:COMPUTERNAME / $env:USERNAME</div>
-$htmlBody
-<div class="footer">SistemBakim v5 | Otomatik olusturuldu</div>
-</body></html>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0B0E14;color:#C9D1D9;font-family:'Segoe UI',sans-serif;padding:0;min-height:100vh}
+.container{max-width:960px;margin:0 auto;padding:40px 32px}
+.header{text-align:center;margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid #1A1F2E}
+.header h1{font-size:28px;font-weight:700;color:#E8ECF1;margin-bottom:4px}
+.header .brand{color:#7C5CFC;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.header .meta{color:#5A6478;font-size:12px;margin-top:12px}
+.section{margin-bottom:32px}
+.section h2{font-size:16px;font-weight:600;color:#7C5CFC;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #151A28}
+.cards{display:flex;gap:16px;flex-wrap:wrap}
+.card{background:#111520;border:1px solid #1A1F2E;border-radius:14px;padding:20px;min-width:140px}
+.card-value{font-size:28px;font-weight:700;color:#E8ECF1}
+.card-label{font-size:11px;color:#5A6478;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
+.card-sub{font-size:12px;color:#7A8194;margin-top:2px}
+.gauge-container{display:flex;align-items:center;justify-content:center;padding:20px}
+.sys-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sys-row{display:flex;justify-content:space-between;padding:8px 14px;background:#0D1117;border-radius:8px}
+.sys-label{color:#5A6478;font-size:12px}
+.sys-value{color:#E8ECF1;font-size:12px;font-weight:500}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;color:#5A6478;text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid #1A1F2E}
+td{padding:10px 12px;border-bottom:1px solid #0F1219;font-size:12px;color:#C9D1D9}
+tr:hover td{background:#0F1219}
+.log-box{background:#0D1117;border:1px solid #151A28;border-radius:12px;padding:16px;max-height:400px;overflow-y:auto;font-family:Consolas,monospace;font-size:11px;line-height:1.7}
+.log-box div{white-space:pre-wrap;word-wrap:break-word}
+.log-ok{color:#34D399} .log-hata{color:#F87171}
+.footer{text-align:center;margin-top:40px;padding-top:16px;border-top:1px solid #151A28;color:#3D4555;font-size:11px}
+.footer a{color:#7C5CFC;text-decoration:none}
+@media print{body{background:#fff;color:#333}.card{border-color:#ddd;background:#f9f9f9}
+  .section h2{color:#5B4FC7}.header h1{color:#333}.log-box{max-height:none}}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">SistemBakim v5.0</div>
+    <h1>Sistem Bakim Raporu</h1>
+    <div class="meta">$tarihGosterim &nbsp;|&nbsp; $($sysInfo.Bilgisayar) / $($sysInfo.Kullanici) &nbsp;|&nbsp; $islemAdi</div>
+  </div>
+
+  <!-- OZET KARTLARI -->
+  <div class="section">
+    <h2>Islem Ozeti</h2>
+    <div class="cards">
+      <div class="card" style="flex:1">
+        <div class="card-value" style="color:#60A5FA">$islenenSay</div>
+        <div class="card-label">Islenen Oge</div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="card-value" style="color:#34D399">$kazanimTxt</div>
+        <div class="card-label">Kazanim</div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="card-value" style="color:$(if ([int]$hataSay -gt 0) {'#F87171'} else {'#34D399'})">$hataSay</div>
+        <div class="card-label">Uyari</div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="card-label">Sure</div>
+        <div class="card-sub" style="color:#E8ECF1;font-size:14px;margin-top:6px">$sureTxt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SISTEM BILGILERI + DISK GAUGE -->
+  <div class="section">
+    <h2>Sistem Bilgileri</h2>
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div style="flex:2;min-width:300px">
+        <div class="sys-grid">
+          <div class="sys-row"><span class="sys-label">Isletim Sistemi</span><span class="sys-value">$($sysInfo.OS)</span></div>
+          <div class="sys-row"><span class="sys-label">Build</span><span class="sys-value">$($sysInfo.Build)</span></div>
+          <div class="sys-row"><span class="sys-label">Islemci</span><span class="sys-value">$($sysInfo.CPU)</span></div>
+          <div class="sys-row"><span class="sys-label">RAM</span><span class="sys-value">$($sysInfo.RAM) ($($sysInfo.RAMKullanim) kullaniliyor)</span></div>
+          <div class="sys-row"><span class="sys-label">Disk (C:)</span><span class="sys-value">$($sysInfo.DiskToplam) toplam, $($sysInfo.DiskBos) bos</span></div>
+          <div class="sys-row"><span class="sys-label">SistemBakim</span><span class="sys-value">v5.0.0 - 69 modul</span></div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:160px">
+        <div class="card" style="text-align:center">
+          <div class="card-label" style="margin-bottom:8px">Disk Kullanimi</div>
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#1A1F2E" stroke-width="8"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="$gaugeColor" stroke-width="8"
+                    stroke-dasharray="$circumference" stroke-dashoffset="$dashOffset"
+                    stroke-linecap="round" transform="rotate(-90 50 50)"/>
+            <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+                  fill="$gaugeColor" font-size="18" font-weight="700" font-family="Segoe UI">$diskPct%</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  $karsilastirmaHtml
+
+  <!-- MODUL SONUCLARI -->
+  <div class="section">
+    <h2>Modul Detaylari</h2>
+    <div style="background:#111520;border-radius:12px;border:1px solid #1A1F2E;overflow:hidden">
+      <table>
+        <thead><tr><th>#</th><th>Islem</th><th>Durum</th><th>Detay</th></tr></thead>
+        <tbody>
+$modulRows
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LOG CIKTISI -->
+  <div class="section">
+    <h2>Islem Logu</h2>
+    <div class="log-box">
+$logHtml
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    SistemBakim v5.0 &nbsp;|&nbsp; Otomatik olusturuldu &nbsp;|&nbsp;
+    <a href="https://github.com/erdiyim/SistemBakim" target="_blank">github.com/erdiyim/SistemBakim</a>
+    <br/>Tarayicinizdan Ctrl+P ile PDF olarak kaydedebilirsiniz.
+  </div>
+
+</div>
+</body>
+</html>
 "@
+
+        $htmlDosya = Join-Path $logKlasor ("SistemBakim_Rapor_{0}.html" -f $tarih)
         [System.IO.File]::WriteAllText($htmlDosya, $htmlIcerik, [System.Text.Encoding]::UTF8)
 
-        # Kullaniciya bildir ve HTML'yi ac
-        ToastGoster "Basarili" ("Rapor kaydedildi: " + (Split-Path $htmlDosya -Leaf)) "#34D399" ([string][char]0xE8FB)
+        # TXT rapor da olustur (yedek)
+        $txtDosya = Join-Path $logKlasor ("SistemBakim_Rapor_{0}.txt" -f $tarih)
+        $txtIcerik = $TxtCikti.Text
+        if ($txtIcerik) {
+            $txtRapor = @("=" * 60, "  SistemBakim - Islem Raporu", "  Tarih: $tarihGosterim", "  Bilgisayar: $env:COMPUTERNAME / $env:USERNAME", "=" * 60, "", $txtIcerik, "", "=" * 60, "  SistemBakim v5 - github.com/erdiyim/SistemBakim")
+            [System.IO.File]::WriteAllLines($txtDosya, $txtRapor, [System.Text.Encoding]::UTF8)
+        }
+
+        ToastGoster "Basarili" ("Rapor olusturuldu: " + (Split-Path $htmlDosya -Leaf)) "#34D399" ([string][char]0xE8FB)
         Start-Process $htmlDosya
+        CiktiEkle ("[Rapor] HTML rapor olusturuldu: $htmlDosya")
+
     } catch {
-        ToastGoster "Hata" ("Disa aktarma basarisiz: " + $_.Exception.Message) "#F87171" ([string][char]0xE783)
+        ToastGoster "Hata" ("Rapor olusturulamadi: " + $_.Exception.Message) "#F87171" ([string][char]0xE783)
     }
+}
+
+# Rapor butonu (Sonuc paneli icindeki)
+$BtnRaporOlustur.Add_Click({
+    HtmlRaporOlustur -SonucPaneldenMi $true
+}.GetNewClosure())
+
+# Disa Aktar butonu (log panelindeki - mevcut islevsellik)
+$BtnDisaAktar.Add_Click({
+    $icerik = $TxtCikti.Text
+    if ([string]::IsNullOrWhiteSpace($icerik)) {
+        ToastGoster "Uyari" "Disa aktarilacak cikti yok. Once bir modul calistirin." "#FB923C" ([string][char]0xE7BA)
+        return
+    }
+    HtmlRaporOlustur -SonucPaneldenMi $false
 }.GetNewClosure())
 
 $BtnToastKapat.Add_Click({
