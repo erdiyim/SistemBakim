@@ -523,6 +523,71 @@ $global:APP_ICON_BMP = IkonBitmapOlustur
               </Grid>
             </Border>
 
+            <!-- GUNCELLEME BANNER'I -->
+            <Border x:Name="GuncellemeKarti" Visibility="Collapsed" Background="#0F1A12"
+                    CornerRadius="14" Padding="18,14" Margin="0,16,0,0"
+                    BorderBrush="#15803D" BorderThickness="1">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets"
+                           FontSize="20" Foreground="#34D399" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                  <TextBlock x:Name="GuncellemeBaslik" Text="" FontSize="13" FontWeight="SemiBold"
+                             Foreground="#E8ECF1" FontFamily="Segoe UI"/>
+                  <TextBlock x:Name="GuncellemeMesaj" Text="" FontSize="11"
+                             Foreground="#7A8194" FontFamily="Segoe UI" Margin="0,2,0,0"
+                             TextWrapping="Wrap" MaxWidth="600"/>
+                </StackPanel>
+                <Button x:Name="BtnGuncelleIndir" Grid.Column="2" Cursor="Hand"
+                        Background="#15803D" Foreground="White" FontSize="11" FontWeight="SemiBold"
+                        Content="Indir ve Kur" Padding="14,6" Margin="8,0,0,0"
+                        BorderThickness="0">
+                  <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                      <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                      </Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="bg" Property="Background" Value="#16A34A"/>
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Button.Template>
+                </Button>
+                <Button x:Name="BtnGuncellemeKapat" Grid.Column="3" Style="{StaticResource SmallBtnStyle}"
+                        Content="&#xE894;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                        VerticalAlignment="Top" Margin="8,0,0,0"/>
+              </Grid>
+            </Border>
+
+            <!-- INDIRME PROGRESS BARI -->
+            <Border x:Name="IndirmePanel" Visibility="Collapsed" Background="#131620"
+                    CornerRadius="14" Padding="18,14" Margin="0,8,0,0"
+                    BorderBrush="#1E2230" BorderThickness="1">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="IndirmeDurum" Text="Indiriliyor..." FontSize="12"
+                             Foreground="#E8ECF1" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                  <TextBlock x:Name="IndirmeYuzde" Grid.Column="1" Text="0%" FontSize="12"
+                             Foreground="#34D399" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+                </Grid>
+                <Border Background="#0B0E14" CornerRadius="4" Height="8" Margin="0,8,0,0">
+                  <Border x:Name="IndirmeBar" Background="#34D399" CornerRadius="4"
+                          Height="8" HorizontalAlignment="Left" Width="0"/>
+                </Border>
+              </StackPanel>
+            </Border>
+
             <!-- SAGLIK + METRIKLER -->
             <Border CornerRadius="20" Margin="0,24,0,0"
                     Padding="40,32" BorderBrush="#1A1F2E" BorderThickness="1">
@@ -2537,6 +2602,9 @@ $window.Add_Loaded({
         $BildirimKarti.Visibility = "Visible"
     }
 
+    # ── OTOMATIK GUNCELLEME KONTROLU (arka planda) ──
+    try { GuncellemeKontrolEt } catch {}
+
     # ── ILK CALISTIRMA SIHIRBAZI ──
     if ($global:AYARLAR.IlkCalistirma) {
         $SihirbazPanel.Opacity = 0
@@ -2549,8 +2617,289 @@ $window.Add_Loaded({
     }
 })
 
+# == OTOMATIK GUNCELLEME SISTEMI ================================
+$global:MEVCUT_SURUM = "5.0.0"
+$global:GUNCELLEME_URL = $null
+$global:GUNCELLEME_DOSYA = $null
+
+# XAML elemanlarini bagla
+$GuncellemeKarti   = $window.FindName("GuncellemeKarti")
+$GuncellemeBaslik  = $window.FindName("GuncellemeBaslik")
+$GuncellemeMesaj   = $window.FindName("GuncellemeMesaj")
+$BtnGuncelleIndir  = $window.FindName("BtnGuncelleIndir")
+$BtnGuncellemeKapat = $window.FindName("BtnGuncellemeKapat")
+$IndirmePanel      = $window.FindName("IndirmePanel")
+$IndirmeDurum      = $window.FindName("IndirmeDurum")
+$IndirmeYuzde      = $window.FindName("IndirmeYuzde")
+$IndirmeBar        = $window.FindName("IndirmeBar")
+
+function GuncellemeKontrolEt {
+    # Arka plan thread'de GitHub API'yi sorgula, UI'yi bloklamadan
+    $job = [PowerShell]::Create()
+    $job.AddScript({
+        param($mevcutSurum)
+        try {
+            $apiUrl = "https://api.github.com/repos/erdiyim/SistemBakim/releases/latest"
+            # TLS 1.2 zorunlu (GitHub API icin)
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+            $wc = New-Object System.Net.WebClient
+            $wc.Headers.Add("User-Agent", "SistemBakim-AutoUpdater/5.0")
+            $wc.Encoding = [System.Text.Encoding]::UTF8
+
+            $json = $wc.DownloadString($apiUrl)
+            $wc.Dispose()
+
+            # JSON parse (System.Web.Extensions ile)
+            Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop
+            $ser = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+            $release = $ser.DeserializeObject($json)
+
+            $tagName = $release["tag_name"] -replace '^v',''
+            $yeniSurum = [Version]$tagName
+            $simdikiSurum = [Version]$mevcutSurum
+
+            if ($yeniSurum -gt $simdikiSurum) {
+                # Setup.exe asset'ini bul
+                $indirUrl = $null
+                $dosyaBoyut = 0
+                $assets = $release["assets"]
+                if ($assets) {
+                    foreach ($asset in $assets) {
+                        $assetName = $asset["name"]
+                        if ($assetName -match "Setup.*\.exe$" -or $assetName -match "\.exe$") {
+                            $indirUrl = $asset["browser_download_url"]
+                            $dosyaBoyut = $asset["size"]
+                            break
+                        }
+                    }
+                }
+
+                # Surum notlarini kisalt (ilk 200 karakter)
+                $body = $release["body"]
+                if ($body -and $body.Length -gt 200) {
+                    $body = $body.Substring(0, 200) + "..."
+                }
+                # Markdown isaretlerini temizle
+                if ($body) {
+                    $body = $body -replace '#{1,6}\s*', '' -replace '\*{1,2}', '' -replace '`', '' -replace '\[([^\]]+)\]\([^\)]+\)', '$1'
+                }
+
+                return @{
+                    Durum = "YeniSurum"
+                    Surum = "v$tagName"
+                    Notlar = $body
+                    IndirUrl = $indirUrl
+                    DosyaBoyut = $dosyaBoyut
+                }
+            } else {
+                return @{ Durum = "Guncel" }
+            }
+        } catch {
+            return @{ Durum = "Hata"; Mesaj = $_.Exception.Message }
+        }
+    }).AddArgument($global:MEVCUT_SURUM)
+
+    $asyncResult = $job.BeginInvoke()
+
+    # Sonucu UI thread'de kontrol etmek icin timer kur (500ms)
+    $guncTimer = New-Object System.Windows.Threading.DispatcherTimer
+    $guncTimer.Interval = [TimeSpan]::FromMilliseconds(500)
+    $guncTimer.Tag = @{ Job = $job; Result = $asyncResult }
+    $guncTimer.Add_Tick({
+        $timer = $this
+        $jobInfo = $timer.Tag
+        $psJob = $jobInfo.Job
+        $result = $jobInfo.Result
+
+        if ($result.IsCompleted) {
+            $timer.Stop()
+            try {
+                $sonuc = $psJob.EndInvoke($result)
+                $psJob.Dispose()
+
+                if ($sonuc.Durum -eq "YeniSurum") {
+                    $global:GUNCELLEME_URL = $sonuc.IndirUrl
+
+                    $GuncellemeBaslik.Text = ("Yeni surum mevcut: {0}" -f $sonuc.Surum)
+                    $notlar = $sonuc.Notlar
+                    if (-not $notlar) { $notlar = "Yeni ozellikler ve hata duzeltmeleri iceriyor." }
+                    $GuncellemeMesaj.Text = $notlar
+
+                    # Goster (fade-in animasyon)
+                    $GuncellemeKarti.Opacity = 0
+                    $GuncellemeKarti.Visibility = "Visible"
+                    $fadeIn = New-Object System.Windows.Media.Animation.DoubleAnimation
+                    $fadeIn.From = 0; $fadeIn.To = 1
+                    $fadeIn.Duration = [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(400))
+                    $GuncellemeKarti.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $fadeIn)
+
+                    CiktiEkle ("[Guncelleme] {0} surumu mevcut" -f $sonuc.Surum)
+                } elseif ($sonuc.Durum -eq "Guncel") {
+                    CiktiEkle "[Guncelleme] Surum guncel."
+                }
+                # Hata durumunda sessizce gecilir (kullaniciyi rahatsiz etmemek icin)
+            } catch {}
+        }
+    }.GetNewClosure())
+    $guncTimer.Start()
+}
+
+function GuncellemeIndir {
+    param([string]$Url)
+
+    if (-not $Url) {
+        # URL yoksa tarayicida releases sayfasini ac
+        Start-Process "https://github.com/erdiyim/SistemBakim/releases/latest"
+        return
+    }
+
+    $GuncellemeKarti.Visibility = "Collapsed"
+    $IndirmePanel.Visibility = "Visible"
+    $IndirmeDurum.Text = "Indiriliyor..."
+    $IndirmeYuzde.Text = "0%"
+    $IndirmeBar.Width = 0
+
+    # Temp klasorune indir
+    $tempDosya = Join-Path $env:TEMP ("SistemBakim_Guncelleme_" + [IO.Path]::GetRandomFileName() + ".exe")
+    $global:GUNCELLEME_DOSYA = $tempDosya
+
+    # Asenkron indirme (WebClient + event)
+    $wc = New-Object System.Net.WebClient
+    $wc.Headers.Add("User-Agent", "SistemBakim-AutoUpdater/5.0")
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    # Progress timer: indirme durumunu kontrol et
+    $global:INDIRME_WC = $wc
+    $global:INDIRME_TAMAMLANDI = $false
+    $global:INDIRME_YUZDE = 0
+    $global:INDIRME_HATA = $null
+
+    # Arka plan thread'de indirme
+    $indirJob = [PowerShell]::Create()
+    $indirJob.AddScript({
+        param($url, $hedef)
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $wc2 = New-Object System.Net.WebClient
+            $wc2.Headers.Add("User-Agent", "SistemBakim-AutoUpdater/5.0")
+
+            # Boyut bilgisini al
+            $req = [System.Net.WebRequest]::Create($url)
+            $req.Method = "HEAD"
+            $req.UserAgent = "SistemBakim-AutoUpdater/5.0"
+            try {
+                $resp = $req.GetResponse()
+                $totalBytes = $resp.ContentLength
+                $resp.Close()
+            } catch { $totalBytes = 0 }
+
+            # Indirme (stream ile progress)
+            $req2 = [System.Net.WebRequest]::Create($url)
+            $req2.UserAgent = "SistemBakim-AutoUpdater/5.0"
+            $response = $req2.GetResponse()
+            $stream = $response.GetResponseStream()
+            $fs = [IO.File]::Create($hedef)
+            $buffer = New-Object byte[] 65536
+            $downloaded = 0
+
+            while (($read = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                $fs.Write($buffer, 0, $read)
+                $downloaded += $read
+                if ($totalBytes -gt 0) {
+                    $pct = [Math]::Round(($downloaded / $totalBytes) * 100)
+                } else {
+                    $pct = -1  # boyut bilinmiyor
+                }
+                # Sonucu pipelinedan gondermek icin kullanacagiz
+            }
+
+            $fs.Close()
+            $stream.Close()
+            $response.Close()
+
+            return @{ Durum = "Tamam"; Boyut = $downloaded; Dosya = $hedef }
+        } catch {
+            return @{ Durum = "Hata"; Mesaj = $_.Exception.Message }
+        }
+    }).AddArgument($Url).AddArgument($tempDosya)
+
+    $indirResult = $indirJob.BeginInvoke()
+
+    # Progress kontrol timer
+    $progTimer = New-Object System.Windows.Threading.DispatcherTimer
+    $progTimer.Interval = [TimeSpan]::FromMilliseconds(300)
+    $progTimer.Tag = @{ Job = $indirJob; Result = $indirResult; TempDosya = $tempDosya }
+    $progTimer.Add_Tick({
+        $timer = $this
+        $info = $timer.Tag
+        $hedef = $info.TempDosya
+
+        # Dosya boyutundan ilerleme tahmin et
+        if (Test-Path $hedef) {
+            try {
+                $boyut = (Get-Item $hedef -ErrorAction Stop).Length
+                $mb = [Math]::Round($boyut / 1MB, 1)
+                $IndirmeDurum.Text = ("Indiriliyor... ({0} MB)" -f $mb)
+            } catch {}
+        }
+
+        if ($info.Result.IsCompleted) {
+            $timer.Stop()
+            try {
+                $sonuc = $info.Job.EndInvoke($info.Result)
+                $info.Job.Dispose()
+
+                if ($sonuc.Durum -eq "Tamam") {
+                    $mb = [Math]::Round($sonuc.Boyut / 1MB, 1)
+                    $IndirmeDurum.Text = "Indirme tamamlandi! ($mb MB) - Kurulum baslatiliyor..."
+                    $IndirmeYuzde.Text = "100%"
+                    $IndirmeBar.Width = $IndirmePanel.ActualWidth - 36
+
+                    CiktiEkle ("[Guncelleme] Indirme tamamlandi: $mb MB")
+                    CiktiEkle "[Guncelleme] Kurulum baslatiliyor..."
+
+                    # 1 saniye sonra Setup'i baslat ve uygulamayi kapat
+                    $kurTimer = New-Object System.Windows.Threading.DispatcherTimer
+                    $kurTimer.Interval = [TimeSpan]::FromSeconds(1)
+                    $kurTimer.Add_Tick({
+                        $this.Stop()
+                        try {
+                            Start-Process -FilePath $global:GUNCELLEME_DOSYA -Verb RunAs
+                        } catch {
+                            # UAC iptal edilirse
+                            $IndirmeDurum.Text = "Kurulum iptal edildi. Dosya: $($global:GUNCELLEME_DOSYA)"
+                            $IndirmeYuzde.Text = ""
+                            return
+                        }
+                        # Uygulamayi kapat
+                        $window.Close()
+                    }.GetNewClosure())
+                    $kurTimer.Start()
+                } else {
+                    $IndirmeDurum.Text = "Indirme basarisiz: " + $sonuc.Mesaj
+                    $IndirmeYuzde.Text = ""
+                    CiktiEkle ("[Guncelleme] HATA: " + $sonuc.Mesaj)
+                }
+            } catch {
+                $IndirmeDurum.Text = "Beklenmeyen hata olustu"
+            }
+        }
+    }.GetNewClosure())
+    $progTimer.Start()
+}
+
+# Buton event'leri
+$BtnGuncelleIndir.Add_Click({
+    GuncellemeIndir $global:GUNCELLEME_URL
+}.GetNewClosure())
+
+$BtnGuncellemeKapat.Add_Click({
+    $GuncellemeKarti.Visibility = "Collapsed"
+}.GetNewClosure())
+
 # == HAZIR MESAJI ===============================================
-CiktiEkle ("SistemBakim v5.0 hazır -- " + $global:MODULLER.Count + " modül yüklendi")
+CiktiEkle ("SistemBakim v5.0 hazir -- " + $global:MODULLER.Count + " modul yuklendi")
 CiktiEkle ("Backend: " + $global:BACKEND)
 
 # == PENCEREYI GOSTER ==========================================
