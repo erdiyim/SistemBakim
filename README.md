@@ -213,21 +213,29 @@ To build the installer, open `installer/SistemBakim_Setup.iss` in [Inno Setup 6.
 
 SistemBakim is actively developed. Here's what's coming next:
 
-### v5.1 — Planned
+### v5.1 — Quality of Life Update *(Coming Soon)*
+
+> *The v5.0 engine is solid. v5.1 makes it seamless.*
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| **Auto-Updater** | 🔬 Research | In-app update check with one-click download. No background services — you control when to update. The app already checks GitHub Releases on startup; v5.1 will add a "Download & Replace" button that fetches the new EXE, verifies its hash, and swaps the binary. |
-| **English UI** | 📋 Planned | Full English language support with runtime toggle. All 69 module names, descriptions, menu items, and dialog texts translated. Language preference saved in `ayarlar.json`. |
-| **Advanced Ping Analyzer** | 📋 Planned | Real-time ping graph with jitter, packet loss, and route tracing. Continuous monitoring mode that logs latency spikes over hours — perfect for diagnosing intermittent connection drops during gaming or video calls. |
+| **In-App Auto Updater** | 🚧 In Progress | Never miss a release. On startup, the app queries GitHub Releases API for newer versions. If found, a non-intrusive banner appears: *"v5.2 available — Update now"*. One click downloads the new Setup.exe, verifies SHA256 hash, and launches the installer. No background services, no forced updates — you decide when. |
+| **HTML/PDF Report Export** | 🚧 In Progress | After any scan or cleanup, generate a professional report with one click. Includes: system info header, module-by-module results, before/after metrics, disk space recovered, and a health score gauge. Pure HTML with inline CSS + SVG charts — opens in any browser, prints as PDF. Perfect for IT professionals who need documentation. |
+| **Custom Profiles** | 📋 Planned | Stop clicking the same checkboxes every time. Create named profiles like *"Gaming Cleanup"*, *"Weekly Deep Clean"*, or *"Office PC Maintenance"* — each saves your selected modules as a JSON file. One-click execution from a dedicated Profiles panel. Export/import profiles to share with others. |
+| **System Tray Mode** | 📋 Planned | Minimize to tray instead of closing. Right-click the tray icon for a quick-action context menu: *"Quick Clean"*, *"RAM Optimize"*, *"Open SistemBakim"*, *"Exit"*. The tray icon shows system health status via color: green (healthy), yellow (needs attention), red (critical). |
+| **English UI** | 📋 Planned | Full English language support with runtime toggle. All 69 module names, descriptions, and dialogs translated. Language preference saved in settings. |
 
-### Future Ideas
+### v6.0 — Platform Vision *(Future)*
 
-- **Profile Export/Import** — Share your optimization profiles with others as JSON files
-- **CLI Automation Mode** — `SistemBakim_CLI.exe --run 3,26,60 --auto` for scripted maintenance
-- **Plugin System** — Community-contributed modules loaded from a `plugins/` directory
+| Feature | Description |
+|---------|-------------|
+| **Guardian Mode** | System Tray watchdog — auto-cleans RAM when usage exceeds 90%, clears temp when disk is 95% full, weekly silent maintenance via Task Scheduler |
+| **Live Pulse Dashboard** | Real-time CPU/RAM/GPU/Disk telemetry with animated charts, temperature monitors, and 24-hour history sparklines |
+| **Script Bazaar** | Community plugin marketplace — browse, install, and share custom PS1 modules with one click. Sandboxed execution with SHA256 verification |
+| **NetMap** | Live network topology map — visualize all active connections on a world map with GeoIP, one-click firewall blocking for suspicious connections |
+| **TimeMachine** | Pre-maintenance system snapshots with selective rollback — registry, services, startup items, DNS, firewall rules. Never worry about breaking something |
 
-> Have an idea? [Open a Feature Request](https://github.com/erdiyim/SistemBakim/issues/new?template=feature_request.yml) — your suggestions built v5.0, and they'll build v5.1 too.
+> Have an idea? [Open a Feature Request](https://github.com/erdiyim/SistemBakim/issues/new?template=feature_request.yml) — your suggestions built v5.0, and they'll shape v6.0 too.
 
 ---
 
@@ -285,15 +293,31 @@ SistemBakim, Windows 10/11 için geliştirilmiş **69 modüllük** bir sistem ba
 - Yönetici yetkisi
 - Ek kurulum gerekmez
 
-### Yol Haritası (Roadmap)
+### Yol Haritasi (Roadmap)
 
-| Özellik | Durum | Açıklama |
+#### v5.1 — Yasam Kalitesi Guncellemesi *(Yakinda)*
+
+> *v5.0 motoru saglam. v5.1 onu kusursuz yapiyor.*
+
+| Ozellik | Durum | Aciklama |
 |---------|-------|----------|
-| **Otomatik Güncelleyici** | 🔬 Araştırma | Uygulama içinden tek tıkla güncelleme |
-| **İngilizce Arayüz** | 📋 Planlandı | Tüm UI metinleri İngilizce seçeneği |
-| **Ping Analizörü** | 📋 Planlandı | Canlı ping grafiği, jitter ve paket kaybı ölçümü |
+| **Otomatik Guncelleyici** | 🚧 Gelistiriliyor | Uygulama acildiginda GitHub Releases API'sini kontrol eder. Yeni surum varsa tek tikla indir + kur. Zorla guncelleme yok — karar sizin. |
+| **HTML/PDF Rapor** | 🚧 Gelistiriliyor | Tarama veya temizlik sonrasi profesyonel rapor olusturma. Sistem bilgisi, modul sonuclari, oncesi/sonrasi metrikleri, saglik skoru — tek tikla HTML ciktisi. IT profesyonelleri icin dokumantasyon. |
+| **Ozel Profiller** | 📋 Planlandi | "Oyun Temizligi", "Haftalik Derin Temizlik" gibi kendi modul profillerinizi JSON olarak kaydedin. Tek tikla calistirin. Baskalarinin profilleri iceri aktarin. |
+| **System Tray Modu** | 📋 Planlandi | Kapatmak yerine gorev cubuguna kucultme. Sag tik menusu: "Hizli Temizlik", "RAM Optimize", "Ac", "Cikis". Ikon rengi sistem sagligini gosterir. |
+| **Ingilizce Arayuz** | 📋 Planlandi | Tum 69 modul adi, aciklamasi ve diyalog metinleri Ingilizce secenegi. |
 
-> Fikriniz mi var? [Özellik İsteği açın](https://github.com/erdiyim/SistemBakim/issues/new?template=feature_request.yml) — v5.0'daki her özellik sizin gibi kullanıcıların önerileriyle oluşturuldu.
+#### v6.0 — Platform Vizyonu *(Gelecek)*
+
+| Ozellik | Aciklama |
+|---------|----------|
+| **Nobetci Modu** | System Tray'de 7/24 izleme — RAM %90'i gecince otomatik temizle, disk dolunca uyar, haftalik sessiz bakim |
+| **Canli Telemetri** | CPU/RAM/GPU/Disk icin gercek zamanli animasyonlu grafikler ve sicaklik monitoru |
+| **Script Pazari** | Topluluk plugin magazasi — tek tikla yukle, calistir, paylas. Sandbox + SHA256 dogrulama |
+| **Ag Haritasi** | Aktif baglantilari dunya haritasinda gorsellestirme, supheli IP'leri tek tikla engelleme |
+| **Zaman Makinesi** | Bakim oncesi sistem snapshot'i + secici geri alma (registry, servisler, baslangic ogeleri) |
+
+> Fikriniz mi var? [Ozellik Istegi acin](https://github.com/erdiyim/SistemBakim/issues/new?template=feature_request.yml) — v5.0'i sizin onerileriniz sekillendirdi, v6.0'i da oyle olacak.
 
 ---
 
